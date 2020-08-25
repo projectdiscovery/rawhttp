@@ -27,6 +27,6 @@ func Dor(req *retryablehttp.Request) (*http.Response, error) {
 	return DefaultClient.Dor(req)
 }
 
-func DoRaw(method, url string, headers map[string][]string, body io.Reader) (*http.Response, error) {
-	return DefaultClient.DoRaw(method, url, headers, body)
+func DoRaw(method, url, uripath string, headers map[string][]string, body io.Reader) (*http.Response, error) {
+	return DefaultClient.DoRaw(method, url, uripath, headers, body)
 }
