@@ -34,17 +34,17 @@ func NewClient(options Options) *Client {
 }
 
 func (c *Client) Head(url string) (*http.Response, error) {
-	return c.DoRaw("HEAD", url, nil, nil)
+	return c.DoRaw("HEAD", url, "", nil, nil)
 }
 
 func (c *Client) Get(url string) (*http.Response, error) {
-	return c.DoRaw("GET", url, nil, nil)
+	return c.DoRaw("GET", url, "", nil, nil)
 }
 
 func (c *Client) Post(url string, mimetype string, body io.Reader) (*http.Response, error) {
 	headers := make(map[string][]string)
 	headers["Content-Type"] = []string{mimetype}
-	return c.DoRaw("POST", url, headers, body)
+	return c.DoRaw("POST", url, "", headers, body)
 }
 
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
@@ -53,27 +53,27 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	url := req.URL.String()
 	body := req.Body
 
-	return c.DoRaw(method, url, headers, body)
+	return c.DoRaw(method, url, "", headers, body)
 }
 
 func (c *Client) Dor(req *retryablehttp.Request) (*http.Response, error) {
 	method := req.Method
 	headers := req.Header
-	url := req.URL.String()
+	url := req.RequestURI
 	body := req.Body
 
-	return c.DoRaw(method, url, headers, body)
+	return c.DoRaw(method, url, "", headers, body)
 }
 
-func (c *Client) DoRaw(method, url string, headers map[string][]string, body io.Reader) (*http.Response, error) {
+func (c *Client) DoRaw(method, url, uripath string, headers map[string][]string, body io.Reader) (*http.Response, error) {
 	redirectstatus := &RedirectStatus{
 		FollowRedirects: true,
 		MaxRedirects:    c.options.MaxRedirects,
 	}
-	return c.do(method, url, headers, body, redirectstatus)
+	return c.do(method, url, uripath, headers, body, redirectstatus)
 }
 
-func (c *Client) do(method, url string, headers map[string][]string, body io.Reader, redirectstatus *RedirectStatus) (*http.Response, error) {
+func (c *Client) do(method, url, uripath string, headers map[string][]string, body io.Reader, redirectstatus *RedirectStatus) (*http.Response, error) {
 	if headers == nil {
 		headers = make(map[string][]string)
 	}
@@ -89,12 +89,17 @@ func (c *Client) do(method, url string, headers map[string][]string, body io.Rea
 	if !strings.Contains(host, ":") {
 		host += ":80"
 	}
+	// standard path
 	path := u.Path
 	if path == "" {
 		path = "/"
 	}
 	if u.RawQuery != "" {
 		path += "?" + u.RawQuery
+	}
+	// override if custom one is specified
+	if uripath != "" {
+		path = uripath
 	}
 	conn, err := c.dialer.Dial("tcp", host)
 	if err != nil {
@@ -134,7 +139,7 @@ func (c *Client) do(method, url string, headers map[string][]string, body io.Rea
 			loc = fmt.Sprintf("http://%s%s", host, loc)
 		}
 		redirectstatus.Current++
-		return c.do(method, loc, headers, body, redirectstatus)
+		return c.do(method, loc, uripath, headers, body, redirectstatus)
 	}
 
 	return r, err
