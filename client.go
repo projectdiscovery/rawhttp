@@ -86,9 +86,15 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 		headers["Host"] = []string{host}
 	}
 
+	protocol := strings.ToLower(url[:strings.IndexByte(url, ':')])
 	if !strings.Contains(host, ":") {
-		host += ":80"
+		if protocol == "https" {
+			host += ":443"
+		} else {
+			host += ":80"
+		}
 	}
+
 	// standard path
 	path := u.Path
 	if path == "" {
@@ -101,7 +107,7 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 	if uripath != "" {
 		path = uripath
 	}
-	conn, err := c.dialer.Dial("tcp", host)
+	conn, err := c.dialer.Dial(protocol, host)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +142,7 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 		}
 		loc := headerValue(r.Header, "Location")
 		if strings.HasPrefix(loc, "/") {
-			loc = fmt.Sprintf("http://%s%s", host, loc)
+			loc = fmt.Sprintf("%s://%s%s", protocol, host, loc)
 		}
 		redirectstatus.Current++
 		return c.do(method, loc, uripath, headers, body, redirectstatus)
