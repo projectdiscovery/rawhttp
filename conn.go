@@ -1,6 +1,7 @@
 package rawhttp
 
 import (
+	"crypto/tls"
 	"io"
 	"net"
 	"sync"
@@ -34,12 +35,22 @@ func (d *dialer) Dial(network, addr string) (Conn, error) {
 		}
 	}
 	d.Unlock()
-	c, err := net.Dial(network, addr)
+	c, err := clientDial(network, addr)
 	return &conn{
 		Client: client.NewClient(c),
 		Conn:   c,
 		dialer: d,
 	}, err
+}
+
+func clientDial(protocol, addr string) (net.Conn, error) {
+	// http
+	if protocol == "http" {
+		return net.Dial("tcp", addr)
+	}
+
+	// https
+	return tls.Dial("tcp", addr, &tls.Config{InsecureSkipVerify: true})
 }
 
 type Conn interface {
