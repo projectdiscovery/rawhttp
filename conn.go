@@ -13,7 +13,7 @@ import (
 // Dialer can dial a remote HTTP server.
 type Dialer interface {
 	// Dial dials a remote http server returning a Conn.
-	Dial(network, addr string) (Conn, error)
+	Dial(protocol, addr string) (Conn, error)
 }
 
 type dialer struct {
@@ -21,7 +21,7 @@ type dialer struct {
 	conns      map[string][]Conn // maps addr to a, possibly empty, slice of existing Conns
 }
 
-func (d *dialer) Dial(network, addr string) (Conn, error) {
+func (d *dialer) Dial(protocol, addr string) (Conn, error) {
 	d.Lock()
 	if d.conns == nil {
 		d.conns = make(map[string][]Conn)
@@ -35,7 +35,7 @@ func (d *dialer) Dial(network, addr string) (Conn, error) {
 		}
 	}
 	d.Unlock()
-	c, err := clientDial(network, addr)
+	c, err := clientDial(protocol, addr)
 	return &conn{
 		Client: client.NewClient(c),
 		Conn:   c,
