@@ -66,7 +66,7 @@ func (w *writer) WriteHeader(key, value string) error {
 	if w.phase != header {
 		return &phaseError{header, w.phase}
 	}
-	_, err := fmt.Fprintf(w, "%s: %s\r\n", key, value)
+	_, err := fmt.Fprintf(w, "%s:%s\r\n", key, value)
 	return err
 }
 

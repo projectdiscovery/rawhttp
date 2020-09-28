@@ -1,9 +1,13 @@
 package rawhttp
 
 import (
+	"bytes"
 	"compress/gzip"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
+	stdurl "net/url"
 	"strings"
 
 	"github.com/projectdiscovery/rawhttp/client"
@@ -96,4 +100,63 @@ func firstErr(err1, err2 error) error {
 		return err2
 	}
 	return nil
+}
+
+// DumpRequestRaw to string
+func DumpRequestRaw(method, url, uripath string, headers map[string][]string, body io.Reader) ([]byte, error) {
+	if headers == nil {
+		headers = make(map[string][]string)
+	}
+	u, err := stdurl.ParseRequestURI(url)
+	if err != nil {
+		return nil, err
+	}
+	host := u.Host
+	headers["Host"] = []string{host}
+
+	// standard path
+	path := u.Path
+	if path == "" {
+		path = "/"
+	}
+	if u.RawQuery != "" {
+		path += "?" + u.RawQuery
+	}
+	// override if custom one is specified
+	if uripath != "" {
+		path = uripath
+	}
+
+	req := toRequest(method, path, nil, headers, body)
+	b := strings.Builder{}
+
+	q := strings.Join(req.Query, "&")
+	if len(q) > 0 {
+		q = "?" + q
+	}
+
+	b.WriteString(fmt.Sprintf("%s %s%s %s\r\n", req.Method, req.Path, q, req.Version.String()))
+
+	for _, header := range req.Headers {
+		b.WriteString(fmt.Sprintf("%s:%s\r\n", header.Key, header.Value))
+	}
+
+	l := req.ContentLength()
+	if req.AutomaticContentLength && l >= 0 {
+		b.WriteString(fmt.Sprintf("Content-Length: %d\r\n", l))
+	}
+
+	b.WriteString("\r\n")
+
+	if req.Body != nil {
+		var buf bytes.Buffer
+		tee := io.TeeReader(req.Body, &buf)
+		body, err := ioutil.ReadAll(tee)
+		if err != nil {
+			return nil, err
+		}
+		b.Write(body)
+	}
+
+	return []byte(b.String()), nil
 }

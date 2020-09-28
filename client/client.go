@@ -106,18 +106,7 @@ func (c *client) WriteRequest(req *Request) error {
 		// doesn't actually start the body, just sends the terminating \r\n
 		return c.StartBody()
 	}
-	// TODO(dfc) Version should implement comparable so we can say version >= HTTP_1_1
-	if req.Version.major == 1 && req.Version.minor == 1 {
-		if l < 0 {
-			if err := c.WriteHeader("Transfer-Encoding", "chunked"); err != nil {
-				return err
-			}
-			if err := c.StartBody(); err != nil {
-				return err
-			}
-			return c.WriteChunked(req.Body)
-		}
-	}
+
 	if err := c.StartBody(); err != nil {
 		return err
 	}
