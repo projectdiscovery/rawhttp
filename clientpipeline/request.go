@@ -10,10 +10,11 @@ import (
 )
 
 type Version struct {
-	major, minor int
+	Major int
+	Minor int
 }
 
-func (v *Version) String() string { return fmt.Sprintf("HTTP/%d.%d", v.major, v.minor) }
+func (v *Version) String() string { return fmt.Sprintf("HTTP/%d.%d", v.Major, v.Minor) }
 
 // Header represents a HTTP header.
 type Header struct {
@@ -83,7 +84,7 @@ func (r *Request) Write(w *bufio.Writer) error {
 	}
 
 	// TODO(dfc) Version should implement comparable so we can say version >= HTTP_1_1
-	if r.Version.major == 1 && r.Version.minor == 1 {
+	if r.Version.Major == 1 && r.Version.Minor == 1 {
 		if l < 0 {
 			if _, err := fmt.Fprintf(w, "Transfer-Encoding: chunked\r\n"); err != nil {
 				return err

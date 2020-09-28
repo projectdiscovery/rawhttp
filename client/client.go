@@ -13,14 +13,17 @@ import (
 
 // Version represents a HTTP version.
 type Version struct {
-	major, minor int
+	Major int
+	Minor int
 }
 
-func (v *Version) String() string { return fmt.Sprintf("HTTP/%d.%d", v.major, v.minor) }
+func (v *Version) String() string {
+	return fmt.Sprintf("HTTP/%d.%d", v.Major, v.Minor)
+}
 
 var (
-	HTTP_1_0 = Version{1, 0}
-	HTTP_1_1 = Version{1, 1}
+	HTTP_1_0 = Version{Major: 1, Minor: 0}
+	HTTP_1_1 = Version{Major: 1, Minor: 1}
 )
 
 // Header represents a HTTP header.

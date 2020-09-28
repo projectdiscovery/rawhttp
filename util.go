@@ -46,6 +46,8 @@ func fromResponse(resp *client.Response) (client.Version, client.Status, map[str
 func toHttpResponse(conn Conn, resp *client.Response) (*http.Response, error) {
 	rheaders := fromHeaders(resp.Headers)
 	r := http.Response{
+		ProtoMinor:    resp.Version.Minor,
+		ProtoMajor:    resp.Version.Major,
 		Status:        resp.Status.String(),
 		StatusCode:    resp.Status.Code,
 		Header:        rheaders,
