@@ -74,6 +74,11 @@ func (c *Client) DoRaw(method, url, uripath string, headers map[string][]string,
 }
 
 func (c *Client) do(method, url, uripath string, headers map[string][]string, body io.Reader, redirectstatus *RedirectStatus) (*http.Response, error) {
+	protocol := "http"
+	if strings.HasPrefix(strings.ToLower(url), "https://") {
+		protocol = "https"
+	}
+
 	if headers == nil {
 		headers = make(map[string][]string)
 	}
@@ -81,12 +86,12 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 	if err != nil {
 		return nil, err
 	}
+
 	host := u.Host
 	if c.options.AutomaticHostHeader {
 		headers["Host"] = []string{host}
 	}
 
-	protocol := strings.ToLower(url[:strings.IndexByte(url, ':')])
 	if !strings.Contains(host, ":") {
 		if protocol == "https" {
 			host += ":443"
@@ -107,6 +112,11 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 	if uripath != "" {
 		path = uripath
 	}
+
+	if strings.HasPrefix(url, "https://") {
+		protocol = "https"
+	}
+
 	conn, err := c.dialer.Dial(protocol, host)
 	if err != nil {
 		return nil, err

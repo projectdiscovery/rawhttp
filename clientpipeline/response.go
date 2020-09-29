@@ -143,7 +143,7 @@ func (resp *Response) ReadVersion(r *bufio.Reader) (Version, error) {
 			}
 		}
 	}
-	return Version{major, minor}, nil
+	return Version{Major: major, Minor: minor}, nil
 }
 
 var invalidVersion Version

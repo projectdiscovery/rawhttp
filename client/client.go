@@ -13,14 +13,17 @@ import (
 
 // Version represents a HTTP version.
 type Version struct {
-	major, minor int
+	Major int
+	Minor int
 }
 
-func (v *Version) String() string { return fmt.Sprintf("HTTP/%d.%d", v.major, v.minor) }
+func (v *Version) String() string {
+	return fmt.Sprintf("HTTP/%d.%d", v.Major, v.Minor)
+}
 
 var (
-	HTTP_1_0 = Version{1, 0}
-	HTTP_1_1 = Version{1, 1}
+	HTTP_1_0 = Version{Major: 1, Minor: 0}
+	HTTP_1_1 = Version{Major: 1, Minor: 1}
 )
 
 // Header represents a HTTP header.
@@ -106,18 +109,7 @@ func (c *client) WriteRequest(req *Request) error {
 		// doesn't actually start the body, just sends the terminating \r\n
 		return c.StartBody()
 	}
-	// TODO(dfc) Version should implement comparable so we can say version >= HTTP_1_1
-	if req.Version.major == 1 && req.Version.minor == 1 {
-		if l < 0 {
-			if err := c.WriteHeader("Transfer-Encoding", "chunked"); err != nil {
-				return err
-			}
-			if err := c.StartBody(); err != nil {
-				return err
-			}
-			return c.WriteChunked(req.Body)
-		}
-	}
+
 	if err := c.StartBody(); err != nil {
 		return err
 	}
