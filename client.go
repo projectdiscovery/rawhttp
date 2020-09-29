@@ -89,7 +89,8 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 
 	host := u.Host
 	if c.options.AutomaticHostHeader {
-		headers["Host"] = []string{host}
+		// add automatic space
+		headers["Host"] = []string{fmt.Sprintf(" %s", host)}
 	}
 
 	if !strings.Contains(host, ":") {
