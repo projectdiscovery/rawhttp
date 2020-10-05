@@ -9,7 +9,7 @@ import (
 
 var DefaultClient = Client{
 	dialer:  new(dialer),
-	options: DefaultOptions,
+	Options: DefaultOptions,
 }
 
 func Get(url string) (*http.Response, error) {
