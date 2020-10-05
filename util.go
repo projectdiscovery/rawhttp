@@ -137,22 +137,22 @@ func DumpRequestRaw(method, url, uripath string, headers map[string][]string, bo
 		q = "?" + q
 	}
 
-	b.WriteString(fmt.Sprintf("%s %s%s %s\r\n", req.Method, req.Path, q, req.Version.String()))
+	b.WriteString(fmt.Sprintf("%s %s%s %s"+client.NewLine, req.Method, req.Path, q, req.Version.String()))
 
 	for _, header := range req.Headers {
 		if header.Value != "" {
-			b.WriteString(fmt.Sprintf("%s:%s\r\n", header.Key, header.Value))
+			b.WriteString(fmt.Sprintf("%s:%s"+client.NewLine, header.Key, header.Value))
 		} else {
-			b.WriteString(fmt.Sprintf("%s\r\n", header.Key))
+			b.WriteString(fmt.Sprintf("%s"+client.NewLine, header.Key))
 		}
 	}
 
 	l := req.ContentLength()
 	if req.AutomaticContentLength && l >= 0 {
-		b.WriteString(fmt.Sprintf("Content-Length: %d\r\n", l))
+		b.WriteString(fmt.Sprintf("Content-Length: %d"+client.NewLine, l))
 	}
 
-	b.WriteString("\r\n")
+	b.WriteString(client.NewLine)
 
 	if req.Body != nil {
 		var buf bytes.Buffer
@@ -164,5 +164,5 @@ func DumpRequestRaw(method, url, uripath string, headers map[string][]string, bo
 		b.Write(body)
 	}
 
-	return []byte(b.String()), nil
+	return []byte(strings.ReplaceAll(b.String(), "\n", client.NewLine)), nil
 }

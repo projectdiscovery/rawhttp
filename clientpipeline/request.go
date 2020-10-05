@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http/httputil"
 	"strings"
+
+	"github.com/projectdiscovery/rawhttp/client"
 )
 
 type Version struct {
@@ -79,7 +81,7 @@ func (r *Request) Write(w *bufio.Writer) error {
 
 	if r.Body == nil {
 		// doesn't actually start the body, just sends the terminating \r\n
-		_, err := fmt.Fprintf(w, "\r\n")
+		_, err := fmt.Fprintf(w, client.NewLine)
 		return err
 	}
 
@@ -89,7 +91,7 @@ func (r *Request) Write(w *bufio.Writer) error {
 			if _, err := fmt.Fprintf(w, "Transfer-Encoding: chunked\r\n"); err != nil {
 				return err
 			}
-			if _, err := fmt.Fprintf(w, "\r\n"); err != nil {
+			if _, err := fmt.Fprintf(w, client.NewLine); err != nil {
 				return err
 			}
 			cw := httputil.NewChunkedWriter(w)
@@ -97,7 +99,7 @@ func (r *Request) Write(w *bufio.Writer) error {
 			return err
 		}
 	}
-	if _, err := fmt.Fprintf(w, "\r\n"); err != nil {
+	if _, err := fmt.Fprintf(w, client.NewLine); err != nil {
 		return err
 	}
 	_, err := io.Copy(w, r.Body)

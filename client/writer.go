@@ -78,7 +78,7 @@ func (w *writer) WriteHeader(key, value string) error {
 
 // StartBody moves the Conn into the body phase, no further headers may be sent at this point.
 func (w *writer) StartBody() error {
-	if _, err := w.Write([]byte("\r\n")); err != nil {
+	if _, err := w.Write([]byte(NewLine)); err != nil {
 		return err
 	}
 	err := w.Writer.(*bufio.Writer).Flush()
