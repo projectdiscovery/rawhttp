@@ -14,21 +14,21 @@ import (
 
 type Client struct {
 	dialer  Dialer
-	options Options
+	Options Options
 }
 
 func AutomaticHostHeader(enable bool) {
-	DefaultClient.options.AutomaticHostHeader = enable
+	DefaultClient.Options.AutomaticHostHeader = enable
 }
 
 func AutomaticContentLength(enable bool) {
-	DefaultClient.options.AutomaticContentLength = enable
+	DefaultClient.Options.AutomaticContentLength = enable
 }
 
 func NewClient(options Options) *Client {
 	client := &Client{
 		dialer:  new(dialer),
-		options: options,
+		Options: options,
 	}
 	return client
 }
@@ -68,7 +68,7 @@ func (c *Client) Dor(req *retryablehttp.Request) (*http.Response, error) {
 func (c *Client) DoRaw(method, url, uripath string, headers map[string][]string, body io.Reader) (*http.Response, error) {
 	redirectstatus := &RedirectStatus{
 		FollowRedirects: true,
-		MaxRedirects:    c.options.MaxRedirects,
+		MaxRedirects:    c.Options.MaxRedirects,
 	}
 	return c.do(method, url, uripath, headers, body, redirectstatus)
 }
@@ -88,7 +88,7 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 	}
 
 	host := u.Host
-	if c.options.AutomaticHostHeader {
+	if c.Options.AutomaticHostHeader {
 		// add automatic space
 		headers["Host"] = []string{fmt.Sprintf(" %s", host)}
 	}
@@ -124,12 +124,12 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 	}
 
 	req := toRequest(method, path, nil, headers, body)
-	req.AutomaticContentLength = c.options.AutomaticContentLength
-	req.AutomaticHost = c.options.AutomaticHostHeader
+	req.AutomaticContentLength = c.Options.AutomaticContentLength
+	req.AutomaticHost = c.Options.AutomaticHostHeader
 
 	// set timeout if any
-	if c.options.Timeout > 0 {
-		conn.SetDeadline(time.Now().Add(c.options.Timeout))
+	if c.Options.Timeout > 0 {
+		conn.SetDeadline(time.Now().Add(c.Options.Timeout))
 	}
 
 	if err := conn.WriteRequest(req); err != nil {
