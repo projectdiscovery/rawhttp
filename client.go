@@ -70,10 +70,18 @@ func (c *Client) DoRaw(method, url, uripath string, headers map[string][]string,
 		FollowRedirects: true,
 		MaxRedirects:    c.Options.MaxRedirects,
 	}
-	return c.do(method, url, uripath, headers, body, redirectstatus)
+	return c.do(method, url, uripath, headers, body, redirectstatus, c.Options)
 }
 
-func (c *Client) do(method, url, uripath string, headers map[string][]string, body io.Reader, redirectstatus *RedirectStatus) (*http.Response, error) {
+func (c *Client) DoRawWithOptions(method, url, uripath string, headers map[string][]string, body io.Reader, options Options) (*http.Response, error) {
+	redirectstatus := &RedirectStatus{
+		FollowRedirects: true,
+		MaxRedirects:    c.Options.MaxRedirects,
+	}
+	return c.do(method, url, uripath, headers, body, redirectstatus, options)
+}
+
+func (c *Client) do(method, url, uripath string, headers map[string][]string, body io.Reader, redirectstatus *RedirectStatus, options Options) (*http.Response, error) {
 	protocol := "http"
 	if strings.HasPrefix(strings.ToLower(url), "https://") {
 		protocol = "https"
@@ -88,7 +96,7 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 	}
 
 	host := u.Host
-	if c.Options.AutomaticHostHeader {
+	if options.AutomaticHostHeader {
 		// add automatic space
 		headers["Host"] = []string{fmt.Sprintf(" %s", host)}
 	}
@@ -124,12 +132,12 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 	}
 
 	req := toRequest(method, path, nil, headers, body)
-	req.AutomaticContentLength = c.Options.AutomaticContentLength
-	req.AutomaticHost = c.Options.AutomaticHostHeader
+	req.AutomaticContentLength = options.AutomaticContentLength
+	req.AutomaticHost = options.AutomaticHostHeader
 
 	// set timeout if any
-	if c.Options.Timeout > 0 {
-		conn.SetDeadline(time.Now().Add(c.Options.Timeout))
+	if options.Timeout > 0 {
+		conn.SetDeadline(time.Now().Add(options.Timeout))
 	}
 
 	if err := conn.WriteRequest(req); err != nil {
@@ -156,7 +164,7 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 			loc = fmt.Sprintf("%s://%s%s", protocol, host, loc)
 		}
 		redirectstatus.Current++
-		return c.do(method, loc, uripath, headers, body, redirectstatus)
+		return c.do(method, loc, uripath, headers, body, redirectstatus, options)
 	}
 
 	return r, err
