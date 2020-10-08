@@ -16,6 +16,7 @@ type Response struct {
 	Version
 	Status
 	Headers []Header
+	body    []byte
 	Body    io.Reader
 }
 
@@ -218,6 +219,14 @@ func (resp *Response) ReadHeader(r *bufio.Reader) (string, string, bool, error) 
 }
 
 func (resp *Response) ReadBody(r *bufio.Reader) io.Reader {
+	l := resp.ContentLength()
+	if l > 0 {
+		resp.body = make([]byte, l)
+		io.ReadFull(r, resp.body)
+
+		return bytes.NewReader(resp.body)
+	}
+
 	return r
 }
 
