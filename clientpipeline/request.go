@@ -5,10 +5,14 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"net/http/httputil"
 	"strings"
 
 	"github.com/projectdiscovery/rawhttp/client"
+)
+
+var (
+	HTTP_1_0 = Version{Major: 1, Minor: 0}
+	HTTP_1_1 = Version{Major: 1, Minor: 1}
 )
 
 type Version struct {
@@ -16,7 +20,9 @@ type Version struct {
 	Minor int
 }
 
-func (v *Version) String() string { return fmt.Sprintf("HTTP/%d.%d", v.Major, v.Minor) }
+func (v *Version) String() string {
+	return fmt.Sprintf("HTTP/%d.%d", v.Major, v.Minor)
+}
 
 // Header represents a HTTP header.
 type Header struct {
@@ -65,7 +71,13 @@ func (r *Request) Write(w *bufio.Writer) error {
 	}
 
 	for _, h := range r.Headers {
-		if _, err := fmt.Fprintf(w, "%s: %s\r\n", h.Key, h.Value); err != nil {
+		var err error
+		if h.Value != "" {
+			_, err = fmt.Fprintf(w, "%s:%s\r\n", h.Key, h.Value)
+		} else {
+			_, err = fmt.Fprintf(w, "%s\r\n", h.Key)
+		}
+		if err != nil {
 			return err
 		}
 	}
@@ -86,19 +98,19 @@ func (r *Request) Write(w *bufio.Writer) error {
 	}
 
 	// TODO(dfc) Version should implement comparable so we can say version >= HTTP_1_1
-	if r.Version.Major == 1 && r.Version.Minor == 1 {
-		if l < 0 {
-			if _, err := fmt.Fprintf(w, "Transfer-Encoding: chunked\r\n"); err != nil {
-				return err
-			}
-			if _, err := fmt.Fprintf(w, client.NewLine); err != nil {
-				return err
-			}
-			cw := httputil.NewChunkedWriter(w)
-			_, err := io.Copy(cw, r.Body)
-			return err
-		}
-	}
+	// if r.Version.Major == 1 && r.Version.Minor == 1 {
+	// 	if l < 0 {
+	// 		if _, err := fmt.Fprintf(w, "Transfer-Encoding: chunked\r\n"); err != nil {
+	// 			return err
+	// 		}
+	// 		if _, err := fmt.Fprintf(w, client.NewLine); err != nil {
+	// 			return err
+	// 		}
+	// 		cw := httputil.NewChunkedWriter(w)
+	// 		_, err := io.Copy(cw, r.Body)
+	// 		return err
+	// 	}
+	// }
 	if _, err := fmt.Fprintf(w, client.NewLine); err != nil {
 		return err
 	}
@@ -126,8 +138,3 @@ func toHeaders(h map[string][]string) []Header {
 	}
 	return r
 }
-
-var (
-	HTTP_1_0 = Version{1, 0}
-	HTTP_1_1 = Version{1, 1}
-)

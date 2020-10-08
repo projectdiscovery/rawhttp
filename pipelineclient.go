@@ -57,14 +57,18 @@ func (c *PipelineClient) Dor(req *retryablehttp.Request) (*http.Response, error)
 	url := req.RequestURI
 	body := req.Body
 
-	return c.do(method, url, "", headers, body)
+	return c.do(method, url, "", headers, body, c.options)
 }
 
 func (c *PipelineClient) DoRaw(method, url, uripath string, headers map[string][]string, body io.Reader) (*http.Response, error) {
-	return c.do(method, url, uripath, headers, body)
+	return c.do(method, url, uripath, headers, body, c.options)
 }
 
-func (c *PipelineClient) do(method, url, uripath string, headers map[string][]string, body io.Reader) (*http.Response, error) {
+func (c *PipelineClient) DoRawWithOptions(method, url, uripath string, headers map[string][]string, body io.Reader, options PipelineOptions) (*http.Response, error) {
+	return c.do(method, url, uripath, headers, body, options)
+}
+
+func (c *PipelineClient) do(method, url, uripath string, headers map[string][]string, body io.Reader, options PipelineOptions) (*http.Response, error) {
 	if headers == nil {
 		headers = make(map[string][]string)
 	}
@@ -94,9 +98,9 @@ func (c *PipelineClient) do(method, url, uripath string, headers map[string][]st
 	}
 
 	req := clientpipeline.ToRequest(method, path, nil, headers, body)
-	resp := &clientpipeline.Response{}
+	var resp clientpipeline.Response
 
-	err = c.client.Do(req, resp)
+	err = c.client.Do(req, &resp)
 
 	// response => net/http response
 	r := http.Response{
