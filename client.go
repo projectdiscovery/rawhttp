@@ -12,19 +12,23 @@ import (
 	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
 )
 
+// Client is a client for making raw http requests with go
 type Client struct {
 	dialer  Dialer
 	Options Options
 }
 
+// AutomaticHostHeader sets Host header for requests automatically
 func AutomaticHostHeader(enable bool) {
 	DefaultClient.Options.AutomaticHostHeader = enable
 }
 
+// AutomaticContentLength performs automatic calculation of request content length.
 func AutomaticContentLength(enable bool) {
 	DefaultClient.Options.AutomaticContentLength = enable
 }
 
+// NewClient creates a new rawhttp client with provided options
 func NewClient(options Options) *Client {
 	client := &Client{
 		dialer:  new(dialer),
@@ -33,20 +37,24 @@ func NewClient(options Options) *Client {
 	return client
 }
 
+// Head makes a HEAD request to a given URL
 func (c *Client) Head(url string) (*http.Response, error) {
 	return c.DoRaw("HEAD", url, "", nil, nil)
 }
 
+// Get makes a GET request to a given URL
 func (c *Client) Get(url string) (*http.Response, error) {
 	return c.DoRaw("GET", url, "", nil, nil)
 }
 
+// Post makes a POST request to a given URL
 func (c *Client) Post(url string, mimetype string, body io.Reader) (*http.Response, error) {
 	headers := make(map[string][]string)
 	headers["Content-Type"] = []string{mimetype}
 	return c.DoRaw("POST", url, "", headers, body)
 }
 
+// Do sends a http request and returns a response
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	method := req.Method
 	headers := req.Header
@@ -56,6 +64,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	return c.DoRaw(method, url, "", headers, body)
 }
 
+// Dor sends a retryablehttp request and returns the response
 func (c *Client) Dor(req *retryablehttp.Request) (*http.Response, error) {
 	method := req.Method
 	headers := req.Header
@@ -65,6 +74,7 @@ func (c *Client) Dor(req *retryablehttp.Request) (*http.Response, error) {
 	return c.DoRaw(method, url, "", headers, body)
 }
 
+// DoRaw does a raw request with some configuration
 func (c *Client) DoRaw(method, url, uripath string, headers map[string][]string, body io.Reader) (*http.Response, error) {
 	redirectstatus := &RedirectStatus{
 		FollowRedirects: true,
@@ -73,6 +83,7 @@ func (c *Client) DoRaw(method, url, uripath string, headers map[string][]string,
 	return c.do(method, url, uripath, headers, body, redirectstatus, c.Options)
 }
 
+// DoRawWithOptions performs a raw request with additional options
 func (c *Client) DoRawWithOptions(method, url, uripath string, headers map[string][]string, body io.Reader, options Options) (*http.Response, error) {
 	redirectstatus := &RedirectStatus{
 		FollowRedirects: true,
@@ -148,7 +159,7 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 		return nil, err
 	}
 
-	r, err := toHttpResponse(conn, resp)
+	r, err := toHTTPResponse(conn, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -170,6 +181,7 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 	return r, err
 }
 
+// RedirectStatus is the current redirect status for the request
 type RedirectStatus struct {
 	FollowRedirects bool
 	MaxRedirects    int

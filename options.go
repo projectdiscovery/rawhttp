@@ -2,6 +2,7 @@ package rawhttp
 
 import "time"
 
+// Options contains configuration options for rawhttp client
 type Options struct {
 	Timeout                time.Duration
 	FollowRedirects        bool
@@ -10,6 +11,7 @@ type Options struct {
 	AutomaticContentLength bool
 }
 
+// DefaultOptions is the default configuration options for the client
 var DefaultOptions = Options{
 	Timeout:                30 * time.Second,
 	FollowRedirects:        true,

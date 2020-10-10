@@ -13,6 +13,7 @@ import (
 	"github.com/projectdiscovery/rawhttp/client"
 )
 
+// StatusError is a HTTP status error object
 type StatusError struct {
 	client.Status
 }
@@ -43,7 +44,7 @@ func fromResponse(resp *client.Response) (client.Version, client.Status, map[str
 	return resp.Version, resp.Status, headers, body
 }
 
-func toHttpResponse(conn Conn, resp *client.Response) (*http.Response, error) {
+func toHTTPResponse(conn Conn, resp *client.Response) (*http.Response, error) {
 	rheaders := fromHeaders(resp.Headers)
 	r := http.Response{
 		ProtoMinor:    resp.Version.Minor,
