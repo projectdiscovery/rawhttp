@@ -1,8 +1,14 @@
 package rawhttp
 
-import "time"
+import (
+	"time"
 
+	"github.com/projectdiscovery/rawhttp/clientpipeline"
+)
+
+// PipelineOptions contains options for pipelined http client
 type PipelineOptions struct {
+	Dialer              clientpipeline.DialFunc
 	Host                string
 	Timeout             time.Duration
 	MaxConnections      int
@@ -10,6 +16,7 @@ type PipelineOptions struct {
 	AutomaticHostHeader bool
 }
 
+// DefaultPipelineOptions is the default options for pipelined http client
 var DefaultPipelineOptions = PipelineOptions{
 	Timeout:             30 * time.Second,
 	MaxConnections:      5,

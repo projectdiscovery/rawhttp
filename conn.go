@@ -53,6 +53,7 @@ func clientDial(protocol, addr string) (net.Conn, error) {
 	return tls.Dial("tcp", addr, &tls.Config{InsecureSkipVerify: true})
 }
 
+// Conn is an interface implemented by a connection
 type Conn interface {
 	client.Client
 	io.Closer

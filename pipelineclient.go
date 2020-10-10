@@ -11,14 +11,17 @@ import (
 	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
 )
 
+// PipelineClient is a client for making pipelined http requests
 type PipelineClient struct {
 	client  *clientpipeline.PipelineClient
 	options PipelineOptions
 }
 
+// NewPipelineClient creates a new pipelined http request client
 func NewPipelineClient(options PipelineOptions) *PipelineClient {
 	client := &PipelineClient{
 		client: &clientpipeline.PipelineClient{
+			Dial:               options.Dialer,
 			Addr:               options.Host,
 			MaxConns:           options.MaxConnections,
 			MaxPendingRequests: options.MaxPendingRequests,
@@ -29,20 +32,24 @@ func NewPipelineClient(options PipelineOptions) *PipelineClient {
 	return client
 }
 
+// Head makes a HEAD request to a given URL
 func (c *PipelineClient) Head(url string) (*http.Response, error) {
 	return c.DoRaw("HEAD", url, "", nil, nil)
 }
 
+// Get makes a GET request to a given URL
 func (c *PipelineClient) Get(url string) (*http.Response, error) {
 	return c.DoRaw("GET", url, "", nil, nil)
 }
 
+// Post makes a POST request to a given URL
 func (c *PipelineClient) Post(url string, mimetype string, body io.Reader) (*http.Response, error) {
 	headers := make(map[string][]string)
 	headers["Content-Type"] = []string{mimetype}
 	return c.DoRaw("POST", url, "", headers, body)
 }
 
+// Do sends a http request and returns a response
 func (c *PipelineClient) Do(req *http.Request) (*http.Response, error) {
 	method := req.Method
 	headers := req.Header
@@ -51,6 +58,7 @@ func (c *PipelineClient) Do(req *http.Request) (*http.Response, error) {
 	return c.DoRaw(method, url, "", headers, body)
 }
 
+// Dor sends a retryablehttp request and returns a response
 func (c *PipelineClient) Dor(req *retryablehttp.Request) (*http.Response, error) {
 	method := req.Method
 	headers := req.Header
@@ -60,10 +68,12 @@ func (c *PipelineClient) Dor(req *retryablehttp.Request) (*http.Response, error)
 	return c.do(method, url, "", headers, body, c.options)
 }
 
+// DoRaw does a raw request with some configuration
 func (c *PipelineClient) DoRaw(method, url, uripath string, headers map[string][]string, body io.Reader) (*http.Response, error) {
 	return c.do(method, url, uripath, headers, body, c.options)
 }
 
+// DoRawWithOptions performs a raw request with additional options
 func (c *PipelineClient) DoRawWithOptions(method, url, uripath string, headers map[string][]string, body io.Reader, options PipelineOptions) (*http.Response, error) {
 	return c.do(method, url, uripath, headers, body, options)
 }
