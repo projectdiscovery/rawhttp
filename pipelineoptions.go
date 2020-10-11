@@ -20,5 +20,6 @@ type PipelineOptions struct {
 var DefaultPipelineOptions = PipelineOptions{
 	Timeout:             30 * time.Second,
 	MaxConnections:      5,
+	MaxPendingRequests:  100,
 	AutomaticHostHeader: true,
 }
