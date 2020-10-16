@@ -86,7 +86,7 @@ func (c *Client) DoRaw(method, url, uripath string, headers map[string][]string,
 // DoRawWithOptions performs a raw request with additional options
 func (c *Client) DoRawWithOptions(method, url, uripath string, headers map[string][]string, body io.Reader, options Options) (*http.Response, error) {
 	redirectstatus := &RedirectStatus{
-		FollowRedirects: true,
+		FollowRedirects: options.FollowRedirects,
 		MaxRedirects:    c.Options.MaxRedirects,
 	}
 	return c.do(method, url, uripath, headers, body, redirectstatus, options)
