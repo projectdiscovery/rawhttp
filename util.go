@@ -114,8 +114,13 @@ func DumpRequestRaw(method, url, uripath string, headers map[string][]string, bo
 	if err != nil {
 		return nil, err
 	}
-	host := u.Host
-	headers["Host"] = []string{host}
+
+	// Handle only if host header is missing
+	_, hasHostHeader := headers["Host"]
+	if !hasHostHeader {
+		host := u.Host
+		headers["Host"] = []string{host}
+	}
 
 	// standard path
 	path := u.Path
