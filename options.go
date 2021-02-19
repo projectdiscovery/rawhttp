@@ -1,6 +1,10 @@
 package rawhttp
 
-import "time"
+import (
+	"time"
+
+	"github.com/projectdiscovery/rawhttp/client"
+)
 
 // Options contains configuration options for rawhttp client
 type Options struct {
@@ -9,6 +13,7 @@ type Options struct {
 	MaxRedirects           int
 	AutomaticHostHeader    bool
 	AutomaticContentLength bool
+	CustomHeaders          client.Headers
 }
 
 // DefaultOptions is the default configuration options for the client
