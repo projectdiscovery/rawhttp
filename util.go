@@ -28,6 +28,9 @@ type readCloser struct {
 }
 
 func toRequest(method string, path string, query []string, headers map[string][]string, body io.Reader, options Options) *client.Request {
+	if len(options.CustomRawBytes) > 0 {
+		return &client.Request{RawBytes: options.CustomRawBytes}
+	}
 	reqHeaders := toHeaders(headers)
 	if len(options.CustomHeaders) > 0 {
 		reqHeaders = options.CustomHeaders

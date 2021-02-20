@@ -14,6 +14,7 @@ type Options struct {
 	AutomaticHostHeader    bool
 	AutomaticContentLength bool
 	CustomHeaders          client.Headers
+	CustomRawBytes         []byte
 }
 
 // DefaultOptions is the default configuration options for the client
