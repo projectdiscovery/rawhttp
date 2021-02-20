@@ -34,6 +34,7 @@ type Header struct {
 
 // Request represents a complete HTTP request.
 type Request struct {
+	RawBytes               []byte
 	AutomaticContentLength bool
 	AutomaticHost          bool
 	Method                 string
@@ -87,6 +88,10 @@ type client struct {
 
 // SendRequest marshalls a HTTP request to the wire.
 func (c *client) WriteRequest(req *Request) error {
+	if len(req.RawBytes) > 0 {
+		_, err := c.Write(req.RawBytes)
+		return err
+	}
 	if err := c.WriteRequestLine(req.Method, req.Path, req.Query, req.Version.String()); err != nil {
 		return err
 	}

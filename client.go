@@ -142,7 +142,7 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 		return nil, err
 	}
 
-	req := toRequest(method, path, nil, headers, body)
+	req := toRequest(method, path, nil, headers, body, options)
 	req.AutomaticContentLength = options.AutomaticContentLength
 	req.AutomaticHost = options.AutomaticHostHeader
 
