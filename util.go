@@ -115,6 +115,9 @@ func firstErr(err1, err2 error) error {
 
 // DumpRequestRaw to string
 func DumpRequestRaw(method, url, uripath string, headers map[string][]string, body io.Reader, options Options) ([]byte, error) {
+	if len(options.CustomRawBytes) > 0 {
+		return options.CustomRawBytes, nil
+	}
 	if headers == nil {
 		headers = make(map[string][]string)
 	}
