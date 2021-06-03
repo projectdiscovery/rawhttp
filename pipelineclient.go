@@ -62,7 +62,7 @@ func (c *PipelineClient) Do(req *http.Request) (*http.Response, error) {
 func (c *PipelineClient) Dor(req *retryablehttp.Request) (*http.Response, error) {
 	method := req.Method
 	headers := req.Header
-	url := req.RequestURI
+	url := req.URL.String()
 	body := req.Body
 
 	return c.do(method, url, "", headers, body, c.options)
