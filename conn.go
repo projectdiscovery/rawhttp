@@ -14,6 +14,8 @@ import (
 type Dialer interface {
 	// Dial dials a remote http server returning a Conn.
 	Dial(protocol, addr string) (Conn, error)
+	// Dial dials a remote http server with timeout returning a Conn.
+	DialTimeout(protocol, addr string, timeout time.Duration) (Conn, error)
 }
 
 type dialer struct {
@@ -22,6 +24,14 @@ type dialer struct {
 }
 
 func (d *dialer) Dial(protocol, addr string) (Conn, error) {
+	return d.dialTimeout(protocol, addr, 0)
+}
+
+func (d *dialer) DialTimeout(protocol, addr string, timeout time.Duration) (Conn, error) {
+	return d.dialTimeout(protocol, addr, timeout)
+}
+
+func (d *dialer) dialTimeout(protocol, addr string, timeout time.Duration) (Conn, error) {
 	d.Lock()
 	if d.conns == nil {
 		d.conns = make(map[string][]Conn)
@@ -35,7 +45,7 @@ func (d *dialer) Dial(protocol, addr string) (Conn, error) {
 		}
 	}
 	d.Unlock()
-	c, err := clientDial(protocol, addr)
+	c, err := clientDial(protocol, addr, timeout)
 	return &conn{
 		Client: client.NewClient(c),
 		Conn:   c,
@@ -43,13 +53,24 @@ func (d *dialer) Dial(protocol, addr string) (Conn, error) {
 	}, err
 }
 
-func clientDial(protocol, addr string) (net.Conn, error) {
+func clientDial(protocol, addr string, timeout time.Duration) (net.Conn, error) {
 	// http
 	if protocol == "http" {
+		if timeout > 0 {
+			return net.DialTimeout("tcp", addr, timeout)
+		}
 		return net.Dial("tcp", addr)
 	}
 
 	// https
+	if timeout > 0 {
+		conn, err := net.DialTimeout("tcp", addr, timeout)
+		if err != nil {
+			return nil, err
+		}
+		tlsConn := tls.Client(conn, &tls.Config{InsecureSkipVerify: true})
+		return tlsConn, tlsConn.Handshake()
+	}
 	return tls.Dial("tcp", addr, &tls.Config{InsecureSkipVerify: true})
 }
 
