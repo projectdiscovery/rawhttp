@@ -318,9 +318,10 @@ type Request struct {
 	// be modified via copying the whole Request using WithContext.
 	// It is unexported to prevent people from using Context wrong
 	// and mutating the contexts held by callers of the same request.
-	ctx             context.Context
-	HeaderSeparator string
-	NewLine         string
+	ctx                        context.Context
+	HeaderSeparator            string
+	NewLine                    string
+	ShouldUseLastValidResponse bool
 }
 
 // Context returns the request's context. To change the context, use

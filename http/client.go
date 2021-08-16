@@ -600,12 +600,12 @@ func (c *Client) do(req *Request) (retres *Response, reterr error) {
 	}
 
 	var (
-		deadline      = c.deadline()
-		reqs          []*Request
-		resp          *Response
-		copyHeaders   = c.makeHeadersCopier(req)
-		reqBodyClosed = false // have we closed the current req.Body?
-
+		deadline                   = c.deadline()
+		reqs                       []*Request
+		resp, lastValidResp        *Response
+		copyHeaders                = c.makeHeadersCopier(req)
+		reqBodyClosed              = false // have we closed the current req.Body?
+		shouldUseLastValidResponse = req.UseLastValidResponse
 		// Redirect behavior:
 		redirectMethod string
 		includeBody    bool
@@ -714,6 +714,9 @@ func (c *Client) do(req *Request) (retres *Response, reterr error) {
 		reqs = append(reqs, req)
 		var err error
 		var didTimeout func() bool
+		if shouldUseLastValidResponse && resp != nil {
+			lastValidResp = resp
+		}
 		if resp, didTimeout, err = c.send(req, deadline); err != nil {
 			// c.send() always closes req.Body
 			reqBodyClosed = true
@@ -723,6 +726,9 @@ func (c *Client) do(req *Request) (retres *Response, reterr error) {
 					err:     err.Error() + " (Client.Timeout exceeded while awaiting headers)",
 					timeout: true,
 				}
+			}
+			if shouldUseLastValidResponse && lastValidResp != nil {
+				return lastValidResp, uerr(err)
 			}
 			return nil, uerr(err)
 		}
