@@ -605,7 +605,7 @@ func (c *Client) do(req *Request) (retres *Response, reterr error) {
 		resp, lastValidResp        *Response
 		copyHeaders                = c.makeHeadersCopier(req)
 		reqBodyClosed              = false // have we closed the current req.Body?
-		shouldUseLastValidResponse = req.UseLastValidResponse
+		shouldUseLastValidResponse = req.ShouldUseLastValidResponse
 		// Redirect behavior:
 		redirectMethod string
 		includeBody    bool
