@@ -12,7 +12,6 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/rand"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -30,10 +29,13 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/projectdiscovery/rawhttp/tls"
+
 	"github.com/projectdiscovery/rawhttp/http"
 
 	"golang.org/x/net/http/httpguts"
 	"golang.org/x/net/http2/hpack"
+	"golang.org/x/net/idna"
 )
 
 const (
@@ -188,7 +190,7 @@ func configureTransports(t1 *http.Transport) (*Transport, error) {
 		t1.TLSClientConfig.NextProtos = append(t1.TLSClientConfig.NextProtos, "http/1.1")
 	}
 	upgradeFn := func(authority string, c *tls.Conn) http.RoundTripper {
-		addr := authorityAddr("https", authority)
+		addr := authorityAddr("https", authority, false)
 		if used, err := connPool.addConnIfNeeded(addr, t2, c); err != nil {
 			go c.Close()
 			return erringRoundTripper{err}
@@ -440,7 +442,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 // authorityAddr returns a given authority (a host/IP, or host:port / ip:port)
 // and returns a host:port. The port 443 is added if needed.
-func authorityAddr(scheme string, authority string) (addr string) {
+func authorityAddr(scheme string, authority string, unsafe bool) (addr string) {
 	host, port, err := net.SplitHostPort(authority)
 	if err != nil { // authority didn't have a port
 		port = "443"
@@ -449,16 +451,27 @@ func authorityAddr(scheme string, authority string) (addr string) {
 		}
 		host = authority
 	}
-	// IPv6 address literal, without a port:
-	if strings.HasPrefix(host, "[") && strings.HasSuffix(host, "]") {
-		return host + ":" + port
+
+	if !unsafe {
+		if a, err := idna.ToASCII(host); err == nil {
+			host = a
+		}
+		// IPv6 address literal, without a port:
+		if strings.HasPrefix(host, "[") && strings.HasSuffix(host, "]") {
+			return host + ":" + port
+		}
 	}
+
 	return net.JoinHostPort(host, port)
 }
 
 // RoundTripOpt is like RoundTrip, but takes options.
 func (t *Transport) RoundTripOpt(req *http.Request, opt RoundTripOpt) (*http.Response, error) {
-	addr := authorityAddr(req.URL.Scheme, req.URL.Host)
+	if !req.Unsafe && !(req.URL.Scheme == "https" || (req.URL.Scheme == "http" && t.AllowHTTP)) {
+		return nil, errors.New("http2: unsupported scheme")
+	}
+
+	addr := authorityAddr(req.URL.Scheme, req.URL.Host, req.Unsafe)
 	for retry := 0; ; retry++ {
 		cc, err := t.connPool().GetClientConn(req, addr)
 		if err != nil {
@@ -911,9 +924,21 @@ var errRequestCanceled = errors.New("net/http: request canceled")
 
 func commaSeparatedTrailers(req *http.Request) (string, error) {
 	keys := make([]string, 0, len(req.Trailer))
-	for k := range req.Trailer {
-		keys = append(keys, k)
+	if req.Unsafe {
+		for k := range req.Trailer {
+			keys = append(keys, k)
+		}
+	} else {
+		for k := range req.Trailer {
+			k = http.CanonicalHeaderKey(k)
+			switch k {
+			case "Transfer-Encoding", "Trailer", "Content-Length":
+				return "", fmt.Errorf("invalid Trailer key %q", k)
+			}
+			keys = append(keys, k)
+		}
 	}
+
 	if len(keys) > 0 {
 		sort.Strings(keys)
 		return strings.Join(keys, ","), nil
@@ -930,6 +955,25 @@ func (cc *ClientConn) responseHeaderTimeout() time.Duration {
 	// this for compatibility with the old http.Transport fields when
 	// we're doing transparent http2.
 	return 0
+}
+
+// checkConnHeaders checks whether req has any invalid connection-level headers.
+// per RFC 7540 section 8.1.2.2: Connection-Specific Header Fields.
+// Certain headers are special-cased as okay but not transmitted later.
+func checkConnHeaders(req *http.Request) error {
+	if req.Unsafe {
+		return nil
+	}
+	if v := req.Header.Get("Upgrade"); v != "" {
+		return fmt.Errorf("http2: invalid Upgrade request header: %q", req.Header["Upgrade"])
+	}
+	if vv := req.Header["Transfer-Encoding"]; len(vv) > 0 && (len(vv) > 1 || vv[0] != "" && vv[0] != "chunked") {
+		return fmt.Errorf("http2: invalid Transfer-Encoding request header: %q", vv)
+	}
+	if vv := req.Header["Connection"]; len(vv) > 0 && (len(vv) > 1 || vv[0] != "" && !asciiEqualFold(vv[0], "close") && !asciiEqualFold(vv[0], "keep-alive")) {
+		return fmt.Errorf("http2: invalid Connection request header: %q", vv)
+	}
+	return nil
 }
 
 // actualContentLength returns a sanitized version of
@@ -951,6 +995,9 @@ func (cc *ClientConn) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func (cc *ClientConn) roundTrip(req *http.Request) (res *http.Response, gotErrAfterReqBodyWrite bool, err error) {
+	if err := checkConnHeaders(req); err != nil {
+		return nil, false, err
+	}
 	if cc.idleTimer != nil {
 		cc.idleTimer.Stop()
 	}
@@ -1287,7 +1334,7 @@ func (cs *clientStream) writeRequestBody(body io.Reader, bodyCloser io.Closer) (
 
 	var sawEOF bool
 	for !sawEOF {
-		n, err := body.Read(buf)
+		n, err := body.Read(buf[:len(buf)])
 		if hasContentLen {
 			remainLen -= int64(n)
 			if remainLen == 0 && err == nil {
@@ -1428,10 +1475,44 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 	if host == "" {
 		host = req.URL.Host
 	}
+	if !req.Unsafe {
+		var err error
+		host, err = httpguts.PunycodeHostPort(host)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	var path string
 	if req.Method != "CONNECT" {
 		path = req.URL.RequestURI()
+		if !req.Unsafe && !validPseudoPath(path) {
+			orig := path
+			path = strings.TrimPrefix(path, req.URL.Scheme+"://"+host)
+			if !validPseudoPath(path) {
+				if req.URL.Opaque != "" {
+					return nil, fmt.Errorf("invalid request :path %q from URL.Opaque = %q", orig, req.URL.Opaque)
+				} else {
+					return nil, fmt.Errorf("invalid request :path %q", orig)
+				}
+			}
+		}
+	}
+
+	// Check for any invalid headers and return an error before we
+	// potentially pollute our hpack state. (We want to be able to
+	// continue to reuse the hpack encoder for future requests)
+	if !req.Unsafe {
+		for k, vv := range req.Header {
+			if !httpguts.ValidHeaderFieldName(k) {
+				return nil, fmt.Errorf("invalid HTTP header name %q", k)
+			}
+			for _, v := range vv {
+				if !httpguts.ValidHeaderFieldValue(v) {
+					return nil, fmt.Errorf("invalid HTTP header value %q for header %q", v, k)
+				}
+			}
+		}
 	}
 
 	enumerateHeaders := func(f func(name, value string)) {
@@ -1456,34 +1537,41 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 
 		var didUA bool
 		for k, vv := range req.Header {
-			if asciiEqualFold(k, "host") || asciiEqualFold(k, "content-length") {
-				// Host is :authority, already sent.
-				// Content-Length is automatic, set below.
-				continue
-			} else if asciiEqualFold(k, "connection") ||
-				asciiEqualFold(k, "proxy-connection") ||
-				asciiEqualFold(k, "transfer-encoding") ||
-				asciiEqualFold(k, "upgrade") ||
-				asciiEqualFold(k, "keep-alive") {
-				// Per 8.1.2.2 Connection-Specific Header
-				// Fields, don't send connection-specific
-				// fields. We have already checked if any
-				// are error-worthy so just ignore the rest.
-				continue
-			} else if asciiEqualFold(k, "user-agent") {
-				// Match Go's http1 behavior: at most one
-				// User-Agent. If set to nil or empty string,
-				// then omit it. Otherwise if not mentioned,
-				// include the default (below).
-				didUA = true
-				if len(vv) < 1 {
+			if !req.Unsafe {
+				if asciiEqualFold(k, "host") || asciiEqualFold(k, "content-length") {
+					// Host is :authority, already sent.
+					// Content-Length is automatic, set below.
+					continue
+				} else if asciiEqualFold(k, "connection") ||
+					asciiEqualFold(k, "proxy-connection") ||
+					asciiEqualFold(k, "transfer-encoding") ||
+					asciiEqualFold(k, "upgrade") ||
+					asciiEqualFold(k, "keep-alive") {
+					// Per 8.1.2.2 Connection-Specific Header
+					// Fields, don't send connection-specific
+					// fields. We have already checked if any
+					// are error-worthy so just ignore the rest.
 					continue
 				}
-				vv = vv[:1]
-				if vv[0] == "" {
-					continue
+			}
+			if req.AutomaticUserAgent {
+				if asciiEqualFold(k, "user-agent") {
+					// Match Go's http1 behavior: at most one
+					// User-Agent. If set to nil or empty string,
+					// then omit it. Otherwise if not mentioned,
+					// include the default (below).
+					didUA = true
+					if len(vv) < 1 {
+						continue
+					}
+					vv = vv[:1]
+					if vv[0] == "" {
+						continue
+					}
 				}
-			} else if asciiEqualFold(k, "cookie") {
+			}
+
+			if asciiEqualFold(k, "cookie") {
 				// Per 8.1.2.5 To allow for better compression efficiency, the
 				// Cookie header field MAY be split into separate header fields,
 				// each with one or more cookie-pairs.
@@ -1512,13 +1600,13 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 				f(k, v)
 			}
 		}
-		if shouldSendReqContentLength(req.Method, contentLength) {
+		if shouldSendReqContentLength(req, contentLength) {
 			f("content-length", strconv.FormatInt(contentLength, 10))
 		}
 		if addGzipHeader {
 			f("accept-encoding", "gzip")
 		}
-		if !didUA {
+		if req.AutomaticUserAgent && !didUA {
 			f("user-agent", defaultUserAgent)
 		}
 	}
@@ -1542,9 +1630,22 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 
 	// Header list size is ok. Write the headers.
 	enumerateHeaders(func(name, value string) {
-		cc.writeHeader(name, value)
-		if traceHeaders {
-			traceWroteHeaderField(trace, name, value)
+		if req.Unsafe {
+			cc.writeHeader(name, value)
+			if traceHeaders {
+				traceWroteHeaderField(trace, name, value)
+			}
+		} else {
+			name, ascii := asciiToLower(name)
+			if !ascii {
+				// Skip writing invalid headers. Per RFC 7540, Section 8.1.2, header
+				// field names have to be ASCII characters (just as in HTTP/1.x).
+				return
+			}
+			cc.writeHeader(name, value)
+			if traceHeaders {
+				traceWroteHeaderField(trace, name, value)
+			}
 		}
 	})
 
@@ -1556,7 +1657,10 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 // transferWriter.shouldSendContentLength.
 // The contentLength is the corrected contentLength (so 0 means actually 0, not unknown).
 // -1 means unknown.
-func shouldSendReqContentLength(method string, contentLength int64) bool {
+func shouldSendReqContentLength(req *http.Request, contentLength int64) bool {
+	if !req.AutomaticContentLength {
+		return false
+	}
 	if contentLength > 0 {
 		return true
 	}
@@ -1565,7 +1669,7 @@ func shouldSendReqContentLength(method string, contentLength int64) bool {
 	}
 	// For zero bodies, whether we send a content-length depends on the method.
 	// It also kinda doesn't matter for http2 either way, with END_STREAM.
-	switch method {
+	switch req.Method {
 	case "POST", "PUT", "PATCH":
 		return true
 	default:
@@ -1589,10 +1693,22 @@ func (cc *ClientConn) encodeTrailers(req *http.Request) ([]byte, error) {
 	}
 
 	for k, vv := range req.Trailer {
-		// Transfer-Encoding, etc.. have already been filtered at the
-		// start of RoundTrip
-		for _, v := range vv {
-			cc.writeHeader(k, v)
+		if req.Unsafe {
+			for _, v := range vv {
+				cc.writeHeader(k, v)
+			}
+		} else {
+			lowKey, ascii := asciiToLower(k)
+			if !ascii {
+				// Skip writing invalid headers. Per RFC 7540, Section 8.1.2, header
+				// field names have to be ASCII characters (just as in HTTP/1.x).
+				continue
+			}
+			// Transfer-Encoding, etc.. have already been filtered at the
+			// start of RoundTrip
+			for _, v := range vv {
+				cc.writeHeader(lowKey, v)
+			}
 		}
 	}
 	return cc.hbuf.Bytes(), nil

@@ -8,9 +8,10 @@ package http2
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"sync"
+
+	"github.com/projectdiscovery/rawhttp/tls"
 
 	"github.com/projectdiscovery/rawhttp/http"
 )

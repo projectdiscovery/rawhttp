@@ -9,7 +9,8 @@ package http2
 
 import (
 	"context"
-	"crypto/tls"
+
+	"github.com/projectdiscovery/rawhttp/tls"
 )
 
 // dialTLSWithContext uses tls.Dialer, added in Go 1.15, to open a TLS
