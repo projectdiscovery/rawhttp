@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http/httptrace"
 	"net/textproto"
 	"reflect"
 	"sort"
@@ -20,6 +19,9 @@ import (
 	"time"
 
 	"github.com/projectdiscovery/rawhttp/http/internal"
+	"github.com/projectdiscovery/rawhttp/http/internal/ascii"
+
+	"github.com/projectdiscovery/rawhttp/http/httptrace"
 
 	"golang.org/x/net/http/httpguts"
 )
@@ -80,7 +82,7 @@ func newTransferWriter(r interface{}) (t *transferWriter, err error) {
 	atLeastHTTP11 := false
 	switch rr := r.(type) {
 	case *Request:
-		if rr.ContentLength != 0 && rr.Body == nil {
+		if !rr.Unsafe && rr.ContentLength != 0 && rr.Body == nil {
 			return nil, fmt.Errorf("http: Request.ContentLength=%d with nil Body", rr.ContentLength)
 		}
 		t.Method = valueOrDefault(rr.Method, "GET")
@@ -639,7 +641,7 @@ func (t *transferReader) parseTransferEncoding() error {
 	if len(raw) != 1 {
 		return &unsupportedTEError{fmt.Sprintf("too many transfer encodings: %q", raw)}
 	}
-	if strings.ToLower(textproto.TrimString(raw[0])) != "chunked" {
+	if !ascii.EqualFold(textproto.TrimString(raw[0]), "chunked") {
 		return &unsupportedTEError{fmt.Sprintf("unsupported transfer encoding: %q", raw[0])}
 	}
 

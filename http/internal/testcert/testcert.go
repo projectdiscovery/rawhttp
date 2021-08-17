@@ -2,13 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package internal
+// Package testcert contains a test-only localhost certificate.
+package testcert
 
 import "strings"
 
 // LocalhostCert is a PEM-encoded TLS cert with SAN IPs
 // "127.0.0.1" and "[::1]", expiring at Jan 29 16:00:00 2084 GMT.
-// generated from src/crypto/tls:
+// generated from src/github.com/projectdiscovery/rawhttp/tls:
 // go run generate_cert.go  --rsa-bits 1024 --host 127.0.0.1,::1,example.com --ca --start-date "Jan 1 00:00:00 1970" --duration=1000000h
 var LocalhostCert = []byte(`-----BEGIN CERTIFICATE-----
 MIICEzCCAXygAwIBAgIQMIMChMLGrR+QvmQvpwAU6zANBgkqhkiG9w0BAQsFADAS
@@ -25,7 +26,7 @@ h1fIw3cSS2OolhloGw/XM6RWPWtPAlGykKLciQrBru5NAPvCMsb/I1DAceTiotQM
 fblo6RBxUQ==
 -----END CERTIFICATE-----`)
 
-// LocalhostKey is the private key for localhostCert.
+// LocalhostKey is the private key for LocalhostCert.
 var LocalhostKey = []byte(testingKey(`-----BEGIN RSA TESTING KEY-----
 MIICXgIBAAKBgQDuLnQAI3mDgey3VBzWnB2L39JUU4txjeVE6myuDqkM/uGlfjb9
 SjY1bIw4iA5sBBZzHi3z0h1YV8QPuxEbi4nW91IJm2gsvvZhIrCHS3l6afab4pZB

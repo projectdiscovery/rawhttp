@@ -6,15 +6,20 @@ package http
 
 import (
 	"io"
-	"net/http/httptrace"
 	"net/textproto"
+	"sort"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/http/httptrace"
+	"github.com/projectdiscovery/rawhttp/http/internal/ascii"
 )
 
 type HeaderOptions struct {
 	Separator  string
 	Terminator string
+	Unsafe     bool
 }
 
 var DefaultHeaderOptions HeaderOptions = HeaderOptions{
@@ -138,6 +143,8 @@ func ParseTime(text string) (t time.Time, err error) {
 	return
 }
 
+var headerNewlineToSpace = strings.NewReplacer("\n", " ", "\r", " ")
+
 // stringWriter implements WriteString on a Writer.
 type stringWriter struct {
 	w io.Writer
@@ -147,6 +154,48 @@ func (w stringWriter) WriteString(s string) (n int, err error) {
 	return w.w.Write([]byte(s))
 }
 
+type keyValues struct {
+	key    string
+	values []string
+}
+
+// A headerSorter implements sort.Interface by sorting a []keyValues
+// by key. It's used as a pointer, so it can fit in a sort.Interface
+// interface value without allocation.
+type headerSorter struct {
+	kvs []keyValues
+}
+
+func (s *headerSorter) Len() int           { return len(s.kvs) }
+func (s *headerSorter) Swap(i, j int)      { s.kvs[i], s.kvs[j] = s.kvs[j], s.kvs[i] }
+func (s *headerSorter) Less(i, j int) bool { return s.kvs[i].key < s.kvs[j].key }
+
+var headerSorterPool = sync.Pool{
+	New: func() interface{} { return new(headerSorter) },
+}
+
+// sortedKeyValues returns h's keys sorted in the returned kvs
+// slice. The headerSorter used to sort is also returned, for possible
+// return to headerSorterCache.
+func (h Header) sortedKeyValues(exclude map[string]bool) (kvs []keyValues, hs *headerSorter) {
+	hs = headerSorterPool.Get().(*headerSorter)
+	if cap(hs.kvs) < len(h) {
+		hs.kvs = make([]keyValues, 0, len(h))
+	}
+	kvs = hs.kvs[:0]
+	for k, vv := range h {
+		if !exclude[k] {
+			kvs = append(kvs, keyValues{k, vv})
+		}
+	}
+	hs.kvs = kvs
+	sort.Sort(hs)
+	return kvs, hs
+}
+
+// WriteSubset writes a header in wire format.
+// If exclude is not nil, keys where exclude[key] == true are not written.
+// Keys are not canonicalized before checking the exclude map.
 func (h Header) WriteSubset(w io.Writer, exclude map[string]bool) error {
 	return h.writeSubset(w, exclude, nil, DefaultHeaderOptions)
 }
@@ -156,34 +205,64 @@ func (h Header) WriteSubsetWithOptions(w io.Writer, exclude map[string]bool, opt
 }
 
 func (h Header) writeSubset(w io.Writer, exclude map[string]bool, trace *httptrace.ClientTrace, options HeaderOptions) error {
-	ws, ok := w.(io.StringWriter)
-	if !ok {
-		ws = stringWriter{w}
-	}
-
-	for k, v := range h {
-		if _, err := ws.WriteString(k); err != nil {
-			return err
+	if options.Unsafe {
+		ws, ok := w.(io.StringWriter)
+		if !ok {
+			ws = stringWriter{w}
 		}
-		if len(v) > 0 {
-			if _, err := ws.WriteString(options.Separator); err != nil {
+		for k, v := range h {
+			if _, err := ws.WriteString(k); err != nil {
 				return err
 			}
-
-			for _, s := range v {
-				if _, err := ws.WriteString(s); err != nil {
+			if len(v) > 0 {
+				if _, err := ws.WriteString(options.Separator); err != nil {
 					return err
 				}
+
+				for _, s := range v {
+					if _, err := ws.WriteString(s); err != nil {
+						return err
+					}
+				}
+			}
+
+			if _, err := ws.WriteString(options.Terminator); err != nil {
+				return err
+			}
+			if trace != nil && trace.WroteHeaderField != nil {
+				trace.WroteHeaderField(k, v)
 			}
 		}
-
-		if _, err := ws.WriteString(options.Terminator); err != nil {
-			return err
+		return nil
+	} else {
+		ws, ok := w.(io.StringWriter)
+		if !ok {
+			ws = stringWriter{w}
 		}
-
+		kvs, sorter := h.sortedKeyValues(exclude)
+		var formattedVals []string
+		for _, kv := range kvs {
+			for _, v := range kv.values {
+				v = headerNewlineToSpace.Replace(v)
+				v = textproto.TrimString(v)
+				for _, s := range []string{kv.key, ": ", v, "\r\n"} {
+					if _, err := ws.WriteString(s); err != nil {
+						headerSorterPool.Put(sorter)
+						return err
+					}
+				}
+				if trace != nil && trace.WroteHeaderField != nil {
+					formattedVals = append(formattedVals, v)
+				}
+			}
+			if trace != nil && trace.WroteHeaderField != nil {
+				trace.WroteHeaderField(kv.key, formattedVals)
+				formattedVals = nil
+			}
+		}
+		headerSorterPool.Put(sorter)
+		return nil
 	}
-
-	return nil
 }
 
 // CanonicalHeaderKey returns the canonical format of the
@@ -224,7 +303,7 @@ func hasToken(v, token string) bool {
 		if endPos := sp + len(token); endPos != len(v) && !isTokenBoundary(v[endPos]) {
 			continue
 		}
-		if strings.EqualFold(v[sp:sp+len(token)], token) {
+		if ascii.EqualFold(v[sp:sp+len(token)], token) {
 			return true
 		}
 	}

@@ -10,20 +10,24 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	"mime"
 	"mime/multipart"
-	"net/http/httptrace"
+	"net"
 	"net/textproto"
 	"net/url"
 	urlpkg "net/url"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/projectdiscovery/rawhttp/tls"
+
+	"github.com/projectdiscovery/rawhttp/http/httptrace"
+	"github.com/projectdiscovery/rawhttp/http/internal/ascii"
 
 	"golang.org/x/net/idna"
 )
@@ -318,10 +322,15 @@ type Request struct {
 	// be modified via copying the whole Request using WithContext.
 	// It is unexported to prevent people from using Context wrong
 	// and mutating the contexts held by callers of the same request.
-	ctx                        context.Context
-	HeaderSeparator            string
-	NewLine                    string
-	ShouldUseLastValidResponse bool
+	ctx context.Context
+
+	HeaderSeparator        string
+	NewLine                string
+	UseLastValidResponse   bool
+	AutomaticContentLength bool
+	AutomaticHostHeader    bool
+	Unsafe                 bool
+	AutomaticUserAgent     bool
 }
 
 // Context returns the request's context. To change the context, use
@@ -569,13 +578,18 @@ func (r *Request) write(w io.Writer, usingProxy bool, extraHeaders Header, waitF
 	// is not given, use the host from the request URL.
 	//
 	// Clean the host, in case it arrives with unexpected stuff in it.
-	host := r.Host
+	host := cleanHost(r.Host, r.Unsafe)
 	if host == "" {
 		if r.URL == nil {
 			return errMissingHost
 		}
-		host = r.URL.Host
+		host = cleanHost(r.URL.Host, r.Unsafe)
 	}
+
+	// According to RFC 6874, an HTTP client, proxy, or other
+	// intermediary must remove any IPv6 zone identifier attached
+	// to an outgoing URI.
+	host = removeZone(host, r.Unsafe)
 
 	ruri := r.URL.RequestURI()
 	if usingProxy && r.URL.Scheme != "" && r.URL.Opaque == "" {
@@ -587,9 +601,9 @@ func (r *Request) write(w io.Writer, usingProxy bool, extraHeaders Header, waitF
 			ruri = r.URL.Opaque
 		}
 	}
-	// if stringContainsCTLByte(ruri) {
-	// 	return errors.New("net/http: can't write control character in Request.URL")
-	// }
+	if !r.Unsafe && stringContainsCTLByte(ruri) {
+		return errors.New("net/http: can't write control character in Request.URL")
+	}
 	// TODO: validate r.Method too? At least it's less likely to
 	// come from an attacker (more likely to be a constant in
 	// code).
@@ -604,18 +618,42 @@ func (r *Request) write(w io.Writer, usingProxy bool, extraHeaders Header, waitF
 		w = bw
 	}
 
-	_, err = fmt.Fprintf(w, "%s %s HTTP/%d.%d\r\n", valueOrDefault(r.Method, "GET"), ruri, r.ProtoMajor, r.ProtoMinor)
+	if r.Unsafe {
+		_, err = fmt.Fprintf(w, "%s %s HTTP/%d.%d\r\n", valueOrDefault(r.Method, "GET"), ruri, r.ProtoMajor, r.ProtoMinor)
+	} else {
+		_, err = fmt.Fprintf(w, "%s %s HTTP/1.1\r\n", valueOrDefault(r.Method, "GET"), ruri)
+	}
 	if err != nil {
 		return err
 	}
 
 	// Header lines
-	_, err = fmt.Fprintf(w, "Host: %s\r\n", host)
-	if err != nil {
-		return err
+	if r.AutomaticHostHeader {
+		_, err = fmt.Fprintf(w, "Host: %s\r\n", host)
+		if err != nil {
+			return err
+		}
+		if trace != nil && trace.WroteHeaderField != nil {
+			trace.WroteHeaderField("Host", []string{host})
+		}
 	}
-	if trace != nil && trace.WroteHeaderField != nil {
-		trace.WroteHeaderField("Host", []string{host})
+
+	if r.AutomaticUserAgent {
+		// Use the defaultUserAgent unless the Header contains one, which
+		// may be blank to not send the header.
+		userAgent := defaultUserAgent
+		if r.Header.has("User-Agent") {
+			userAgent = r.Header.Get("User-Agent")
+		}
+		if userAgent != "" {
+			_, err = fmt.Fprintf(w, "User-Agent: %s\r\n", userAgent)
+			if err != nil {
+				return err
+			}
+			if trace != nil && trace.WroteHeaderField != nil {
+				trace.WroteHeaderField("User-Agent", []string{userAgent})
+			}
+		}
 	}
 
 	// Process Body,ContentLength,Close,Trailer
@@ -628,7 +666,11 @@ func (r *Request) write(w io.Writer, usingProxy bool, extraHeaders Header, waitF
 		return err
 	}
 
-	err = r.Header.writeSubset(w, nil, trace, HeaderOptions{Separator: r.HeaderSeparator, Terminator: r.NewLine})
+	if r.Unsafe {
+		err = r.Header.writeSubset(w, nil, trace, HeaderOptions{Separator: r.HeaderSeparator, Terminator: r.NewLine})
+	} else {
+		err = r.Header.writeSubset(w, reqWriteExcludeHeader, trace, DefaultHeaderOptions)
+	}
 	if err != nil {
 		return err
 	}
@@ -640,7 +682,11 @@ func (r *Request) write(w io.Writer, usingProxy bool, extraHeaders Header, waitF
 		}
 	}
 
-	_, err = io.WriteString(w, r.NewLine)
+	if r.Unsafe {
+		_, err = io.WriteString(w, r.NewLine)
+	} else {
+		_, err = io.WriteString(w, "\r\n")
+	}
 	if err != nil {
 		return err
 	}
@@ -704,14 +750,70 @@ func idnaASCII(v string) (string, error) {
 	// version does not.
 	// Note that for correct ASCII IDNs ToASCII will only do considerably more
 	// work, but it will not cause an allocation.
-	if isASCII(v) {
+	if ascii.Is(v) {
 		return v, nil
 	}
 	return idna.Lookup.ToASCII(v)
 }
 
+// cleanHost cleans up the host sent in request's Host header.
+//
+// It both strips anything after '/' or ' ', and puts the value
+// into Punycode form, if necessary.
+//
+// Ideally we'd clean the Host header according to the spec:
+//   https://tools.ietf.org/html/rfc7230#section-5.4 (Host = uri-host [ ":" port ]")
+//   https://tools.ietf.org/html/rfc7230#section-2.7 (uri-host -> rfc3986's host)
+//   https://tools.ietf.org/html/rfc3986#section-3.2.2 (definition of host)
+// But practically, what we are trying to avoid is the situation in
+// issue 11206, where a malformed Host header used in the proxy context
+// would create a bad request. So it is enough to just truncate at the
+// first offending character.
+func cleanHost(in string, unsafe bool) string {
+	if unsafe {
+		return in
+	}
+	if i := strings.IndexAny(in, " /"); i != -1 {
+		in = in[:i]
+	}
+	host, port, err := net.SplitHostPort(in)
+	if err != nil { // input was just a host
+		a, err := idnaASCII(in)
+		if err != nil {
+			return in // garbage in, garbage out
+		}
+		return a
+	}
+	a, err := idnaASCII(host)
+	if err != nil {
+		return in // garbage in, garbage out
+	}
+	return net.JoinHostPort(a, port)
+}
+
+// removeZone removes IPv6 zone identifier from host.
+// E.g., "[fe80::1%en0]:8080" to "[fe80::1]:8080"
+func removeZone(host string, unsafe bool) string {
+	if unsafe {
+		return host
+	}
+	if !strings.HasPrefix(host, "[") {
+		return host
+	}
+	i := strings.LastIndex(host, "]")
+	if i < 0 {
+		return host
+	}
+	j := strings.LastIndex(host[:i], "%")
+	if j < 0 {
+		return host
+	}
+	return host[:j] + host[i:]
+}
+
 // ParseHTTPVersion parses an HTTP version string.
-// "HTTP/1.0" returns (1, 0, true).
+// "HTTP/1.0" returns (1, 0, true). Note that strings without
+// a minor version, such as "HTTP/2", are not valid.
 func ParseHTTPVersion(vers string) (major, minor int, ok bool) {
 	const Big = 1000000 // arbitrary upper bound
 	switch vers {
@@ -738,7 +840,27 @@ func ParseHTTPVersion(vers string) (major, minor int, ok bool) {
 	return major, minor, true
 }
 
-// NewRequest wraps NewRequestWithContext using the background context.
+func validMethod(method string, unsafe bool) bool {
+	if unsafe {
+		return true
+	}
+	/*
+	     Method         = "OPTIONS"                ; Section 9.2
+	                    | "GET"                    ; Section 9.3
+	                    | "HEAD"                   ; Section 9.4
+	                    | "POST"                   ; Section 9.5
+	                    | "PUT"                    ; Section 9.6
+	                    | "DELETE"                 ; Section 9.7
+	                    | "TRACE"                  ; Section 9.8
+	                    | "CONNECT"                ; Section 9.9
+	                    | extension-method
+	   extension-method = token
+	     token          = 1*<any CHAR except CTLs or separators>
+	*/
+	return len(method) > 0 && strings.IndexFunc(method, isNotToken) == -1
+}
+
+// NewRequest wraps NewRequestWithContext using context.Background.
 func NewRequest(method, url string, body io.Reader) (*Request, error) {
 	return NewRequestWithContext(context.Background(), method, url, body)
 }
@@ -772,6 +894,9 @@ func NewRequestWithContext(ctx context.Context, method, url string, body io.Read
 		// We still enforce validMethod for non-empty methods.
 		method = "GET"
 	}
+	if !validMethod(method, true) {
+		return nil, fmt.Errorf("net/http: invalid method %q", method)
+	}
 	if ctx == nil {
 		return nil, errors.New("net/http: nil Context")
 	}
@@ -786,17 +911,20 @@ func NewRequestWithContext(ctx context.Context, method, url string, body io.Read
 	// The host's colon:port should be normalized. See Issue 14836.
 	u.Host = removeEmptyPort(u.Host)
 	req := &Request{
-		ctx:             ctx,
-		Method:          method,
-		URL:             u,
-		Proto:           "HTTP/1.1",
-		ProtoMajor:      1,
-		ProtoMinor:      1,
-		Header:          make(Header),
-		Body:            rc,
-		Host:            u.Host,
-		HeaderSeparator: ": ",
-		NewLine:         "\r\n",
+		ctx:                    ctx,
+		Method:                 method,
+		URL:                    u,
+		Proto:                  "HTTP/1.1",
+		ProtoMajor:             1,
+		ProtoMinor:             1,
+		Header:                 make(Header),
+		Body:                   rc,
+		Host:                   u.Host,
+		HeaderSeparator:        ": ",
+		NewLine:                "\r\n",
+		AutomaticContentLength: true,
+		AutomaticHostHeader:    true,
+		AutomaticUserAgent:     true,
 	}
 	if body != nil {
 		switch v := body.(type) {
@@ -861,7 +989,7 @@ func (r *Request) BasicAuth() (username, password string, ok bool) {
 func parseBasicAuth(auth string) (username, password string, ok bool) {
 	const prefix = "Basic "
 	// Case insensitive prefix match. See Issue 22736.
-	if len(auth) < len(prefix) || !strings.EqualFold(auth[:len(prefix)], prefix) {
+	if len(auth) < len(prefix) || !ascii.EqualFold(auth[:len(prefix)], prefix) {
 		return
 	}
 	c, err := base64.StdEncoding.DecodeString(auth[len(prefix):])
@@ -923,16 +1051,16 @@ func putTextprotoReader(r *textproto.Reader) {
 // requests and handle them via the Handler interface. ReadRequest
 // only supports HTTP/1.x requests. For HTTP/2, use golang.org/x/net/http2.
 func ReadRequest(b *bufio.Reader) (*Request, error) {
-	return readRequest(b, deleteHostHeader)
+	req, err := readRequest(b)
+	if err != nil {
+		return nil, err
+	}
+
+	delete(req.Header, "Host")
+	return req, err
 }
 
-// Constants for readRequest's deleteHostHeader parameter.
-const (
-	deleteHostHeader = true
-	keepHostHeader   = false
-)
-
-func readRequest(b *bufio.Reader, deleteHostHeader bool) (req *Request, err error) {
+func readRequest(b *bufio.Reader) (req *Request, err error) {
 	tp := newTextprotoReader(b)
 	req = new(Request)
 
@@ -952,6 +1080,9 @@ func readRequest(b *bufio.Reader, deleteHostHeader bool) (req *Request, err erro
 	req.Method, req.RequestURI, req.Proto, ok = parseRequestLine(s)
 	if !ok {
 		return nil, badStringError("malformed HTTP request", s)
+	}
+	if !validMethod(req.Method, false) {
+		return nil, badStringError("invalid method", req.Method)
 	}
 	rawurl := req.RequestURI
 	if req.ProtoMajor, req.ProtoMinor, ok = ParseHTTPVersion(req.Proto); !ok {
@@ -987,6 +1118,9 @@ func readRequest(b *bufio.Reader, deleteHostHeader bool) (req *Request, err erro
 		return nil, err
 	}
 	req.Header = Header(mimeHeader)
+	if len(req.Header["Host"]) > 1 {
+		return nil, fmt.Errorf("too many Host headers")
+	}
 
 	// RFC 7230, section 5.3: Must treat
 	//	GET /index.html HTTP/1.1
@@ -998,9 +1132,6 @@ func readRequest(b *bufio.Reader, deleteHostHeader bool) (req *Request, err erro
 	req.Host = req.URL.Host
 	if req.Host == "" {
 		req.Host = req.Header.get("Host")
-	}
-	if deleteHostHeader {
-		delete(req.Header, "Host")
 	}
 
 	fixPragmaCacheControl(req.Header)
@@ -1034,6 +1165,9 @@ func readRequest(b *bufio.Reader, deleteHostHeader bool) (req *Request, err erro
 // MaxBytesReader prevents clients from accidentally or maliciously
 // sending a large request and wasting server resources.
 func MaxBytesReader(w ResponseWriter, r io.ReadCloser, n int64) io.ReadCloser {
+	if n < 0 { // Treat negative limits as equivalent to 0.
+		n = 0
+	}
 	return &maxBytesReader{w: w, r: r, n: n}
 }
 
@@ -1199,16 +1333,18 @@ func (r *Request) ParseForm() error {
 // its file parts are stored in memory, with the remainder stored on
 // disk in temporary files.
 // ParseMultipartForm calls ParseForm if necessary.
+// If ParseForm returns an error, ParseMultipartForm returns it but also
+// continues parsing the request body.
 // After one call to ParseMultipartForm, subsequent calls have no effect.
 func (r *Request) ParseMultipartForm(maxMemory int64) error {
 	if r.MultipartForm == multipartByReader {
 		return errors.New("http: multipart handled by MultipartReader")
 	}
+	var parseFormErr error
 	if r.Form == nil {
-		err := r.ParseForm()
-		if err != nil {
-			return err
-		}
+		// Let errors in ParseForm fall through, and just
+		// return it at the end.
+		parseFormErr = r.ParseForm()
 	}
 	if r.MultipartForm != nil {
 		return nil
@@ -1235,7 +1371,7 @@ func (r *Request) ParseMultipartForm(maxMemory int64) error {
 
 	r.MultipartForm = f
 
-	return nil
+	return parseFormErr
 }
 
 // FormValue returns the first value for the named component of the query.
@@ -1363,5 +1499,5 @@ func requestMethodUsuallyLacksBody(method string) bool {
 // an HTTP/1 connection.
 func (r *Request) requiresHTTP1() bool {
 	return hasToken(r.Header.Get("Connection"), "upgrade") &&
-		strings.EqualFold(r.Header.Get("Upgrade"), "websocket")
+		ascii.EqualFold(r.Header.Get("Upgrade"), "websocket")
 }

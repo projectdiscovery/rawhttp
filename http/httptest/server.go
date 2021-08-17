@@ -7,18 +7,19 @@
 package httptest
 
 import (
-	"crypto/tls"
 	"crypto/x509"
 	"flag"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
-	"net/http/internal"
+	"net/http/internal/testcert"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/tls"
 )
 
 // A Server is an HTTP server listening on a system-chosen port on the
@@ -144,7 +145,7 @@ func (s *Server) StartTLS() {
 	if s.client == nil {
 		s.client = &http.Client{Transport: &http.Transport{}}
 	}
-	cert, err := tls.X509KeyPair(internal.LocalhostCert, internal.LocalhostKey)
+	cert, err := tls.X509KeyPair(testcert.LocalhostCert, testcert.LocalhostKey)
 	if err != nil {
 		panic(fmt.Sprintf("httptest: NewTLSServer: %v", err))
 	}
@@ -316,6 +317,13 @@ func (s *Server) wrap() {
 	s.Config.ConnState = func(c net.Conn, cs http.ConnState) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
+
+		// Keep Close from returning until the user's ConnState hook
+		// (if any) finishes. Without this, the call to forgetConn
+		// below might send the count to 0 before we run the hook.
+		s.wg.Add(1)
+		defer s.wg.Done()
+
 		switch cs {
 		case http.StateNew:
 			s.wg.Add(1)

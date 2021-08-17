@@ -5,13 +5,14 @@
 package httptest
 
 import (
-	"crypto/tls"
 	"io"
 	"net/http"
 	"net/url"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/projectdiscovery/rawhttp/tls"
 )
 
 func TestNewRequest(t *testing.T) {

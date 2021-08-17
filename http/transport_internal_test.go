@@ -8,13 +8,14 @@ package http
 
 import (
 	"bytes"
-	"crypto/tls"
 	"errors"
 	"io"
 	"net"
-	"net/http/internal"
+	"net/http/internal/testcert"
 	"strings"
 	"testing"
+
+	"github.com/projectdiscovery/rawhttp/tls"
 )
 
 // Issue 15446: incorrect wrapping of errors when server closes an idle connection.
@@ -191,7 +192,7 @@ func (f roundTripFunc) RoundTrip(r *Request) (*Response, error) {
 
 // Issue 25009
 func TestTransportBodyAltRewind(t *testing.T) {
-	cert, err := tls.X509KeyPair(internal.LocalhostCert, internal.LocalhostKey)
+	cert, err := tls.X509KeyPair(testcert.LocalhostCert, testcert.LocalhostKey)
 	if err != nil {
 		t.Fatal(err)
 	}

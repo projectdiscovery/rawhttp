@@ -45,12 +45,15 @@ func ExampleGet() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	robots, err := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	res.Body.Close()
+	if res.StatusCode > 299 {
+		log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%s", robots)
+	fmt.Printf("%s", body)
 }
 
 func ExampleFileServer() {
@@ -142,7 +145,7 @@ func ExampleListenAndServeTLS() {
 		io.WriteString(w, "Hello, TLS!\n")
 	})
 
-	// One can use generate_cert.go in crypto/tls to generate cert.pem and key.pem.
+	// One can use generate_cert.go in github.com/projectdiscovery/rawhttp/tls to generate cert.pem and key.pem.
 	log.Printf("About to listen on 8443. Go to https://127.0.0.1:8443/")
 	err := http.ListenAndServeTLS(":8443", "cert.pem", "key.pem", nil)
 	log.Fatal(err)

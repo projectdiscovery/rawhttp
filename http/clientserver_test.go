@@ -11,7 +11,6 @@ import (
 	"compress/gzip"
 	"crypto/rand"
 	"crypto/sha1"
-	"crypto/tls"
 	"fmt"
 	"hash"
 	"io"
@@ -30,6 +29,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/tls"
 )
 
 type clientServerTest struct {

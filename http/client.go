@@ -11,7 +11,6 @@ package http
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -23,6 +22,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/tls"
+
+	"github.com/projectdiscovery/rawhttp/http/internal/ascii"
 )
 
 // A Client is an HTTP client. Its zero value (DefaultClient) is a
@@ -432,8 +435,7 @@ func basicAuth(username, password string) string {
 // An error is returned if there were too many redirects or if there
 // was an HTTP protocol error. A non-2xx response doesn't cause an
 // error. Any returned error will be of type *url.Error. The url.Error
-// value's Timeout method will report true if request timed out or was
-// canceled.
+// value's Timeout method will report true if the request timed out.
 //
 // When err is nil, resp always contains a non-nil resp.Body.
 // Caller should close resp.Body when done reading from it.
@@ -442,6 +444,9 @@ func basicAuth(username, password string) string {
 //
 // To make a request with custom headers, use NewRequest and
 // DefaultClient.Do.
+//
+// To make a request with a specified context.Context, use NewRequestWithContext
+// and DefaultClient.Do.
 func Get(url string) (resp *Response, err error) {
 	return DefaultClient.Get(url)
 }
@@ -466,6 +471,9 @@ func Get(url string) (resp *Response, err error) {
 // Caller should close resp.Body when done reading from it.
 //
 // To make a request with custom headers, use NewRequest and Client.Do.
+//
+// To make a request with a specified context.Context, use NewRequestWithContext
+// and Client.Do.
 func (c *Client) Get(url string) (resp *Response, err error) {
 	req, err := NewRequest("GET", url, nil)
 	if err != nil {
@@ -541,7 +549,10 @@ func urlErrorOp(method string) string {
 	if method == "" {
 		return "Get"
 	}
-	return method[:1] + strings.ToLower(method[1:])
+	if lowerMethod, ok := ascii.ToLower(method); ok {
+		return method[:1] + lowerMethod[1:]
+	}
+	return method
 }
 
 // Do sends an HTTP request and returns an HTTP response, following
@@ -579,8 +590,7 @@ func urlErrorOp(method string) string {
 // standard library body types.
 //
 // Any returned error will be of type *url.Error. The url.Error
-// value's Timeout method will report true if request timed out or was
-// canceled.
+// value's Timeout method will report true if the request timed out.
 func (c *Client) Do(req *Request) (*Response, error) {
 	return c.do(req)
 }
@@ -602,10 +612,11 @@ func (c *Client) do(req *Request) (retres *Response, reterr error) {
 	var (
 		deadline                   = c.deadline()
 		reqs                       []*Request
-		resp, lastValidResp        *Response
+		resp, lastresp             *Response
 		copyHeaders                = c.makeHeadersCopier(req)
 		reqBodyClosed              = false // have we closed the current req.Body?
-		shouldUseLastValidResponse = req.ShouldUseLastValidResponse
+		shouldUseLastValidResponse = req.UseLastValidResponse
+
 		// Redirect behavior:
 		redirectMethod string
 		includeBody    bool
@@ -715,20 +726,19 @@ func (c *Client) do(req *Request) (retres *Response, reterr error) {
 		var err error
 		var didTimeout func() bool
 		if shouldUseLastValidResponse && resp != nil {
-			lastValidResp = resp
+			lastresp = resp
 		}
 		if resp, didTimeout, err = c.send(req, deadline); err != nil {
 			// c.send() always closes req.Body
 			reqBodyClosed = true
 			if !deadline.IsZero() && didTimeout() {
 				err = &httpError{
-					// TODO: early in cycle: s/Client.Timeout exceeded/timeout or context cancellation/
 					err:     err.Error() + " (Client.Timeout exceeded while awaiting headers)",
 					timeout: true,
 				}
 			}
-			if shouldUseLastValidResponse && lastValidResp != nil {
-				return lastValidResp, uerr(err)
+			if shouldUseLastValidResponse && lastresp != nil {
+				return lastresp, uerr(err)
 			}
 			return nil, uerr(err)
 		}
@@ -827,6 +837,9 @@ func defaultCheckRedirect(req *Request, via []*Request) error {
 //
 // See the Client.Do method documentation for details on how redirects
 // are handled.
+//
+// To make a request with a specified context.Context, use NewRequestWithContext
+// and DefaultClient.Do.
 func Post(url, contentType string, body io.Reader) (resp *Response, err error) {
 	return DefaultClient.Post(url, contentType, body)
 }
@@ -839,6 +852,9 @@ func Post(url, contentType string, body io.Reader) (resp *Response, err error) {
 // request.
 //
 // To set custom headers, use NewRequest and Client.Do.
+//
+// To make a request with a specified context.Context, use NewRequestWithContext
+// and Client.Do.
 //
 // See the Client.Do method documentation for details on how redirects
 // are handled.
@@ -864,6 +880,9 @@ func (c *Client) Post(url, contentType string, body io.Reader) (resp *Response, 
 //
 // See the Client.Do method documentation for details on how redirects
 // are handled.
+//
+// To make a request with a specified context.Context, use NewRequestWithContext
+// and DefaultClient.Do.
 func PostForm(url string, data url.Values) (resp *Response, err error) {
 	return DefaultClient.PostForm(url, data)
 }
@@ -879,6 +898,9 @@ func PostForm(url string, data url.Values) (resp *Response, err error) {
 //
 // See the Client.Do method documentation for details on how redirects
 // are handled.
+//
+// To make a request with a specified context.Context, use NewRequestWithContext
+// and Client.Do.
 func (c *Client) PostForm(url string, data url.Values) (resp *Response, err error) {
 	return c.Post(url, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
@@ -894,6 +916,9 @@ func (c *Client) PostForm(url string, data url.Values) (resp *Response, err erro
 //    308 (Permanent Redirect)
 //
 // Head is a wrapper around DefaultClient.Head
+//
+// To make a request with a specified context.Context, use NewRequestWithContext
+// and DefaultClient.Do.
 func Head(url string) (resp *Response, err error) {
 	return DefaultClient.Head(url)
 }
@@ -907,6 +932,9 @@ func Head(url string) (resp *Response, err error) {
 //    303 (See Other)
 //    307 (Temporary Redirect)
 //    308 (Permanent Redirect)
+//
+// To make a request with a specified context.Context, use NewRequestWithContext
+// and Client.Do.
 func (c *Client) Head(url string) (resp *Response, err error) {
 	req, err := NewRequest("HEAD", url, nil)
 	if err != nil {
@@ -932,7 +960,7 @@ func (c *Client) CloseIdleConnections() {
 }
 
 // cancelTimerBody is an io.ReadCloser that wraps rc with two features:
-// 1) on Read error or close, the stop func is called.
+// 1) On Read error or close, the stop func is called.
 // 2) On Read failure, if reqDidTimeout is true, the error is wrapped and
 //    marked as net.Error that hit its timeout.
 type cancelTimerBody struct {
