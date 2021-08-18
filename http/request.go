@@ -324,13 +324,15 @@ type Request struct {
 	// and mutating the contexts held by callers of the same request.
 	ctx context.Context
 
-	HeaderSeparator        string
-	NewLine                string
-	UseLastValidResponse   bool
-	AutomaticContentLength bool
-	AutomaticHostHeader    bool
-	Unsafe                 bool
-	AutomaticUserAgent     bool
+	HeaderSeparator         string
+	NewLine                 string
+	UseLastValidResponse    bool
+	AutomaticContentLength  bool
+	AutomaticHostHeader     bool
+	Unsafe                  bool
+	AutomaticUserAgent      bool
+	AutomaticAcceptEndocing bool
+	AutomaticScheme         bool
 }
 
 // Context returns the request's context. To change the context, use
@@ -911,20 +913,22 @@ func NewRequestWithContext(ctx context.Context, method, url string, body io.Read
 	// The host's colon:port should be normalized. See Issue 14836.
 	u.Host = removeEmptyPort(u.Host)
 	req := &Request{
-		ctx:                    ctx,
-		Method:                 method,
-		URL:                    u,
-		Proto:                  "HTTP/1.1",
-		ProtoMajor:             1,
-		ProtoMinor:             1,
-		Header:                 make(Header),
-		Body:                   rc,
-		Host:                   u.Host,
-		HeaderSeparator:        ": ",
-		NewLine:                "\r\n",
-		AutomaticContentLength: true,
-		AutomaticHostHeader:    true,
-		AutomaticUserAgent:     true,
+		ctx:                     ctx,
+		Method:                  method,
+		URL:                     u,
+		Proto:                   "HTTP/1.1",
+		ProtoMajor:              1,
+		ProtoMinor:              1,
+		Header:                  make(Header),
+		Body:                    rc,
+		Host:                    u.Host,
+		HeaderSeparator:         ": ",
+		NewLine:                 "\r\n",
+		AutomaticContentLength:  true,
+		AutomaticHostHeader:     true,
+		AutomaticUserAgent:      true,
+		AutomaticAcceptEndocing: true,
+		AutomaticScheme:         true,
 	}
 	if body != nil {
 		switch v := body.(type) {

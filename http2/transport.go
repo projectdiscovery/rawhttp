@@ -1521,7 +1521,9 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 		// target URI (the path-absolute production and optionally a '?' character
 		// followed by the query production (see Sections 3.3 and 3.4 of
 		// [RFC3986]).
-		f(":authority", host)
+		if req.AutomaticHostHeader {
+			f(":authority", host)
+		}
 		m := req.Method
 		if m == "" {
 			m = http.MethodGet
@@ -1529,7 +1531,9 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 		f(":method", m)
 		if req.Method != "CONNECT" {
 			f(":path", path)
-			f(":scheme", req.URL.Scheme)
+			if req.AutomaticScheme {
+				f(":scheme", req.URL.Scheme)
+			}
 		}
 		if trailers != "" {
 			f("trailer", trailers)
@@ -1603,7 +1607,7 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 		if shouldSendReqContentLength(req, contentLength) {
 			f("content-length", strconv.FormatInt(contentLength, 10))
 		}
-		if addGzipHeader {
+		if req.AutomaticAcceptEndocing && addGzipHeader {
 			f("accept-encoding", "gzip")
 		}
 		if req.AutomaticUserAgent && !didUA {
