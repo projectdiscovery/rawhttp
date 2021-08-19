@@ -333,6 +333,8 @@ type Request struct {
 	AutomaticUserAgent      bool
 	AutomaticAcceptEndocing bool
 	AutomaticScheme         bool
+	AutomaticMethod         bool
+	AutomaticPath           bool
 }
 
 // Context returns the request's context. To change the context, use
@@ -929,6 +931,8 @@ func NewRequestWithContext(ctx context.Context, method, url string, body io.Read
 		AutomaticUserAgent:      true,
 		AutomaticAcceptEndocing: true,
 		AutomaticScheme:         true,
+		AutomaticMethod:         true,
+		AutomaticPath:           true,
 	}
 	if body != nil {
 		switch v := body.(type) {
