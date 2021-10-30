@@ -137,7 +137,13 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 		protocol = "https"
 	}
 
-	conn, err := c.dialer.Dial(protocol, host)
+	var conn Conn
+	if options.Timeout > 0 {
+		conn, err = c.dialer.DialTimeout(protocol, host, options.Timeout)
+	} else {
+		conn, err = c.dialer.Dial(protocol, host)
+	}
+
 	if err != nil {
 		return nil, err
 	}
