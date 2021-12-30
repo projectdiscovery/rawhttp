@@ -55,6 +55,8 @@ func (d *dialer) DialWithProxy(protocol, addr, proxyURL string, timeout time.Dur
 		return nil, fmt.Errorf("unsupported proxy error: %w", err)
 	}
 	switch u.Scheme {
+	case "http":
+		c, err = proxy.HTTPDialer(proxyURL, timeout)(addr)
 	case "socks5", "socks5h":
 		c, err = proxy.Socks5Dialer(proxyURL, timeout)(addr)
 	default:
