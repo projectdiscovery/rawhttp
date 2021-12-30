@@ -92,6 +92,13 @@ func (c *Client) DoRawWithOptions(method, url, uripath string, headers map[strin
 	return c.do(method, url, uripath, headers, body, redirectstatus, options)
 }
 
+func (c *Client) getConn(protocol, host string) (Conn, error) {
+	if c.Options.Proxy != "" {
+		return c.dialer.DialWithProxy(protocol, host, c.Options.Proxy, c.Options.ProxyDialTimeout)
+	}
+	return c.dialer.Dial(protocol, host)
+}
+
 func (c *Client) do(method, url, uripath string, headers map[string][]string, body io.Reader, redirectstatus *RedirectStatus, options Options) (*http.Response, error) {
 	protocol := "http"
 	if strings.HasPrefix(strings.ToLower(url), "https://") {
@@ -137,7 +144,7 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 		protocol = "https"
 	}
 
-	conn, err := c.dialer.Dial(protocol, host)
+	conn, err := c.getConn(protocol, host)
 	if err != nil {
 		return nil, err
 	}
