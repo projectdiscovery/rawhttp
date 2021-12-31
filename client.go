@@ -96,14 +96,10 @@ func (c *Client) getConn(protocol, host string, options Options) (Conn, error) {
 	if options.Proxy != "" {
 		return c.dialer.DialWithProxy(protocol, host, c.Options.Proxy, c.Options.ProxyDialTimeout)
 	}
-	var conn Conn
-	var err error
-	if options.Timeout > 0 {
-		conn, err = c.dialer.DialTimeout(protocol, host, options.Timeout)
-	} else {
-		conn, err = c.dialer.Dial(protocol, host)
+	if options.Timeout < 0 {
+		options.Timeout = 0
 	}
-	return conn, err
+	return c.dialer.DialTimeout(protocol, host, options.Timeout)
 }
 
 func (c *Client) do(method, url, uripath string, headers map[string][]string, body io.Reader, redirectstatus *RedirectStatus, options Options) (*http.Response, error) {
