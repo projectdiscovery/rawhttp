@@ -15,6 +15,8 @@ type Options struct {
 	AutomaticContentLength bool
 	CustomHeaders          client.Headers
 	CustomRawBytes         []byte
+	Proxy                  string
+	ProxyDialTimeout       time.Duration
 }
 
 // DefaultOptions is the default configuration options for the client

@@ -2,18 +2,23 @@ package rawhttp
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io"
 	"net"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/projectdiscovery/rawhttp/client"
+	"github.com/projectdiscovery/rawhttp/proxy"
 )
 
 // Dialer can dial a remote HTTP server.
 type Dialer interface {
 	// Dial dials a remote http server returning a Conn.
 	Dial(protocol, addr string) (Conn, error)
+	DialWithProxy(protocol, addr, proxyURL string, timeout time.Duration) (Conn, error)
 	// Dial dials a remote http server with timeout returning a Conn.
 	DialTimeout(protocol, addr string, timeout time.Duration) (Conn, error)
 }
@@ -53,25 +58,62 @@ func (d *dialer) dialTimeout(protocol, addr string, timeout time.Duration) (Conn
 	}, err
 }
 
-func clientDial(protocol, addr string, timeout time.Duration) (net.Conn, error) {
-	// http
-	if protocol == "http" {
-		if timeout > 0 {
-			return net.DialTimeout("tcp", addr, timeout)
-		}
-		return net.Dial("tcp", addr)
+func (d *dialer) DialWithProxy(protocol, addr, proxyURL string, timeout time.Duration) (Conn, error) {
+	var c net.Conn
+	u, err := url.Parse(proxyURL)
+	if err != nil {
+		return nil, fmt.Errorf("unsupported proxy error: %w", err)
 	}
+	switch u.Scheme {
+	case "http":
+		c, err = proxy.HTTPDialer(proxyURL, timeout)(addr)
+	case "socks5", "socks5h":
+		c, err = proxy.Socks5Dialer(proxyURL, timeout)(addr)
+	default:
+		return nil, fmt.Errorf("unsupported proxy protocol: %s", proxyURL)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("proxy error: %w", err)
+	}
+	if protocol == "https" {
+		if c, err = TlsHandshake(c, addr); err != nil {
+			return nil, fmt.Errorf("tls handshake error: %w", err)
+		}
+	}
+	return &conn{
+		Client: client.NewClient(c),
+		Conn:   c,
+		dialer: d,
+	}, err
+}
 
-	// https
-	if timeout > 0 {
-		conn, err := net.DialTimeout("tcp", addr, timeout)
-		if err != nil {
-			return nil, err
+func clientDial(protocol, addr string, timeout time.Duration) (net.Conn, error) {
+	conn, err := net.DialTimeout("tcp", addr, timeout)
+	if protocol == "https" {
+		if conn, err = TlsHandshake(conn, addr); err != nil {
+			return nil, fmt.Errorf("tls handshake error: %w", err)
 		}
-		tlsConn := tls.Client(conn, &tls.Config{InsecureSkipVerify: true})
-		return tlsConn, tlsConn.Handshake()
 	}
-	return tls.Dial("tcp", addr, &tls.Config{InsecureSkipVerify: true})
+	return conn, err
+}
+
+// TlsHandshake tls handshake on a plain connection
+func TlsHandshake(conn net.Conn, addr string) (net.Conn, error) {
+	colonPos := strings.LastIndex(addr, ":")
+	if colonPos == -1 {
+		colonPos = len(addr)
+	}
+	hostname := addr[:colonPos]
+
+	tlsConn := tls.Client(conn, &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName: hostname,
+	})
+	if err := tlsConn.Handshake(); err != nil {
+		conn.Close()
+		return nil, err
+	}
+	return tlsConn, nil
 }
 
 // Conn is an interface implemented by a connection
