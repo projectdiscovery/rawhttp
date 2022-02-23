@@ -44,7 +44,7 @@ func (d *dialer) dialTimeout(protocol, addr string, timeout time.Duration) (Conn
 	if c, ok := d.conns[addr]; ok {
 		if len(c) > 0 {
 			conn := c[0]
-			c[0], c = c[len(c)-1], c[:len(c)-1]
+			c[0] = c[len(c)-1]
 			d.Unlock()
 			return conn, nil
 		}

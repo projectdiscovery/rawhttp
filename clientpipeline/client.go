@@ -16,16 +16,17 @@ import (
 const DefaultMaxConnsPerHost = 512
 const DefaultMaxIdleConnDuration = 10 * time.Second
 const DefaultMaxIdemponentCallAttempts = 5
+const defaultReadBufferSize = 4096
+const defaultWriteBufferSize = 4096
 
 type DialFunc func(addr string) (net.Conn, error)
 type RetryIfFunc func(request *Request) bool
-
-var errorChPool sync.Pool
 
 var (
 	ErrNoFreeConns      = errors.New("no free connections available to host")
 	ErrConnectionClosed = errors.New("the server closed connection before returning the first response byte. " +
 		"Make sure the server returns 'Connection: close' response header before closing the connection")
+	ErrGetOnly = errors.New("non-GET request received")
 )
 
 type timeoutError struct {

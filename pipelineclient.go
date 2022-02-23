@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	stdurl "net/url"
-	"strings"
 
 	"github.com/projectdiscovery/rawhttp/clientpipeline"
 	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
@@ -86,14 +85,6 @@ func (c *PipelineClient) do(method, url, uripath string, headers map[string][]st
 	if err != nil {
 		return nil, err
 	}
-	host := u.Host
-	if !strings.Contains(host, ":") {
-		host += ":80"
-	}
-	if len(headers["Host"]) > 0 {
-		host = headers["Host"][0]
-	}
-
 	// standard path
 	path := u.Path
 	if path == "" {

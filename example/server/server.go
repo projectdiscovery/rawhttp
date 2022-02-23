@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
-)
 
-var i int
+	"github.com/projectdiscovery/gologger"
+)
 
 func headers(w http.ResponseWriter, req *http.Request) {
 	for name, headers := range req.Header {
@@ -17,5 +17,7 @@ func headers(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	http.HandleFunc("/headers", headers)
-	http.ListenAndServe(":10000", nil)
+	if err := http.ListenAndServe(":10000", nil); err != nil {
+		gologger.Fatal().Msgf("Could not listen and serve: %s\n", err)
+	}
 }
