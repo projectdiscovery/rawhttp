@@ -26,6 +26,8 @@ var (
 	ErrNoFreeConns      = errors.New("no free connections available to host")
 	ErrConnectionClosed = errors.New("the server closed connection before returning the first response byte. " +
 		"Make sure the server returns 'Connection: close' response header before closing the connection")
+	// ErrGetOnly is returned when server expects only GET requests,
+	// but some other type of request came (Server.GetOnly option is true).
 	ErrGetOnly = errors.New("non-GET request received")
 )
 
