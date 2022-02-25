@@ -45,13 +45,6 @@ func toRequest(method string, path string, query []string, headers map[string][]
 		Body:    body,
 	}
 }
-
-func fromResponse(resp *client.Response) (client.Version, client.Status, map[string][]string, io.Reader) {
-	body := resp.Body
-	headers := fromHeaders(resp.Headers)
-	return resp.Version, resp.Status, headers, body
-}
-
 func toHTTPResponse(conn Conn, resp *client.Response) (*http.Response, error) {
 	rheaders := fromHeaders(resp.Headers)
 	r := http.Response{

@@ -158,7 +158,7 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 
 	// set timeout if any
 	if options.Timeout > 0 {
-		conn.SetDeadline(time.Now().Add(options.Timeout))
+		_ = conn.SetDeadline(time.Now().Add(options.Timeout))
 	}
 
 	if err := conn.WriteRequest(req); err != nil {
