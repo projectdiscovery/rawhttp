@@ -14,6 +14,7 @@ type Options struct {
 	AutomaticHostHeader    bool
 	AutomaticContentLength bool
 	CustomHeaders          client.Headers
+	ForceReadAllBody       bool // ignores content length and reads all body
 	CustomRawBytes         []byte
 }
 

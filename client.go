@@ -154,7 +154,7 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 	if err := conn.WriteRequest(req); err != nil {
 		return nil, err
 	}
-	resp, err := conn.ReadResponse()
+	resp, err := conn.ReadResponse(options.ForceReadAllBody)
 	if err != nil {
 		return nil, err
 	}
