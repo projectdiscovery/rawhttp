@@ -61,7 +61,6 @@ type Status struct {
 	Reason string
 }
 
-var invalidStatus Status
 
 func (s Status) String() string { return fmt.Sprintf("%d %s", s.Code, s.Reason) }
 

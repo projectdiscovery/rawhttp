@@ -80,7 +80,7 @@ func (resp *Response) Read(r *bufio.Reader) error {
 		}
 		if key == "" {
 			// empty header values are valid, rfc 2616 s4.2.
-			err = errors.New("invalid header")
+			err = errors.New("invalid header") //nolint
 			break
 		}
 		headers = append(headers, Header{key, value})
@@ -222,7 +222,7 @@ func (resp *Response) ReadBody(r *bufio.Reader) io.Reader {
 	l := resp.ContentLength()
 	if l > 0 {
 		resp.body = make([]byte, l)
-		io.ReadFull(r, resp.body)
+		io.ReadFull(r, resp.body) //nolint
 
 		return bytes.NewReader(resp.body)
 	}

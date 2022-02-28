@@ -14,7 +14,10 @@ type Options struct {
 	AutomaticHostHeader    bool
 	AutomaticContentLength bool
 	CustomHeaders          client.Headers
+	ForceReadAllBody       bool // ignores content length and reads all body
 	CustomRawBytes         []byte
+	Proxy                  string
+	ProxyDialTimeout       time.Duration
 }
 
 // DefaultOptions is the default configuration options for the client
