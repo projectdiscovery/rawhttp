@@ -46,13 +46,13 @@ func HTTPDialer(proxyAddr string, timeout time.Duration) DialFunc {
 			req += "Proxy-Authorization: Basic " + auth + "\r\n"
 		}
 		req += "\r\n"
-		clientReq := &client.Request {
+		clientReq := &client.Request{
 			RawBytes: []byte(req),
 		}
 		if err = conn.WriteRequest(clientReq); err != nil {
 			return nil, err
 		}
-		resp, err := conn.ReadResponse()
+		resp, err := conn.ReadResponse(false)
 		if err != nil {
 			return nil, err
 		}

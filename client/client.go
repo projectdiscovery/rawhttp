@@ -70,7 +70,7 @@ const readerBuffer = 4096
 // HTTP but connection pooling is expected to be handled at a higher layer.
 type Client interface {
 	WriteRequest(*Request) error
-	ReadResponse() (*Response, error)
+	ReadResponse(forceReadAll bool) (*Response, error)
 }
 
 // NewClient returns a Client implementation which uses rw to communicate.
@@ -122,7 +122,7 @@ func (c *client) WriteRequest(req *Request) error {
 }
 
 // ReadResponse unmarshalls a HTTP response.
-func (c *client) ReadResponse() (*Response, error) {
+func (c *client) ReadResponse(forceReadAll bool) (*Response, error) {
 	version, code, msg, err := c.ReadStatusLine()
 	var headers []Header
 	if err != nil {
@@ -148,7 +148,7 @@ func (c *client) ReadResponse() (*Response, error) {
 		Headers: headers,
 		Body:    c.ReadBody(),
 	}
-	if l := resp.ContentLength(); l >= 0 {
+	if l := resp.ContentLength(); l >= 0 && !forceReadAll {
 		resp.Body = io.LimitReader(resp.Body, l)
 	} else if resp.TransferEncoding() == "chunked" {
 		resp.Body = httputil.NewChunkedReader(resp.Body)
