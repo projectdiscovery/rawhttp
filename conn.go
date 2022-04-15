@@ -88,13 +88,24 @@ func (d *dialer) DialWithProxy(protocol, addr, proxyURL string, timeout time.Dur
 }
 
 func clientDial(protocol, addr string, timeout time.Duration) (net.Conn, error) {
-	conn, err := net.DialTimeout("tcp", addr, timeout)
-	if protocol == "https" {
-		if conn, err = TlsHandshake(conn, addr); err != nil {
-			return nil, fmt.Errorf("tls handshake error: %w", err)
+	// http
+	if protocol == "http" {
+		if timeout > 0 {
+			return net.DialTimeout("tcp", addr, timeout)
 		}
+		return net.Dial("tcp", addr)
 	}
-	return conn, err
+
+	// https
+	if timeout > 0 {
+		conn, err := net.DialTimeout("tcp", addr, timeout)
+		if err != nil {
+			return nil, err
+		}
+		tlsConn := tls.Client(conn, &tls.Config{InsecureSkipVerify: true})
+		return tlsConn, tlsConn.Handshake()
+	}
+	return tls.Dial("tcp", addr, &tls.Config{InsecureSkipVerify: true})
 }
 
 // TlsHandshake tls handshake on a plain connection
