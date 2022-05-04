@@ -328,6 +328,10 @@ func (c *pipelineConnClient) init() {
 					if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
 						// Throttle client reconnections on temporary errors
 						time.Sleep(time.Second)
+					} else {
+						w := <-c.chW
+						w.err = err
+						w.done <- struct{}{}
 					}
 				} else {
 					c.chLock.Lock()
