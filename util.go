@@ -27,7 +27,7 @@ type readCloser struct {
 	io.Closer
 }
 
-func toRequest(method string, path string, query []string, headers map[string][]string, body io.Reader, options Options) *client.Request {
+func toRequest(method string, path string, query []string, headers map[string][]string, body io.Reader, options *Options) *client.Request {
 	if len(options.CustomRawBytes) > 0 {
 		return &client.Request{RawBytes: options.CustomRawBytes}
 	}
@@ -107,7 +107,7 @@ func firstErr(err1, err2 error) error {
 }
 
 // DumpRequestRaw to string
-func DumpRequestRaw(method, url, uripath string, headers map[string][]string, body io.Reader, options Options) ([]byte, error) {
+func DumpRequestRaw(method, url, uripath string, headers map[string][]string, body io.Reader, options *Options) ([]byte, error) {
 	if len(options.CustomRawBytes) > 0 {
 		return options.CustomRawBytes, nil
 	}
