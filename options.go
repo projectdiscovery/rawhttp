@@ -18,10 +18,11 @@ type Options struct {
 	CustomRawBytes         []byte
 	Proxy                  string
 	ProxyDialTimeout       time.Duration
+	SNI                    string
 }
 
 // DefaultOptions is the default configuration options for the client
-var DefaultOptions = Options{
+var DefaultOptions = &Options{
 	Timeout:                30 * time.Second,
 	FollowRedirects:        true,
 	MaxRedirects:           10,
