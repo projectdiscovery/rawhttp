@@ -15,7 +15,7 @@ import (
 // Client is a client for making raw http requests with go
 type Client struct {
 	dialer  Dialer
-	Options Options
+	Options *Options
 }
 
 // AutomaticHostHeader sets Host header for requests automatically
@@ -29,7 +29,7 @@ func AutomaticContentLength(enable bool) {
 }
 
 // NewClient creates a new rawhttp client with provided options
-func NewClient(options Options) *Client {
+func NewClient(options *Options) *Client {
 	client := &Client{
 		dialer:  new(dialer),
 		Options: options,
@@ -84,7 +84,7 @@ func (c *Client) DoRaw(method, url, uripath string, headers map[string][]string,
 }
 
 // DoRawWithOptions performs a raw request with additional options
-func (c *Client) DoRawWithOptions(method, url, uripath string, headers map[string][]string, body io.Reader, options Options) (*http.Response, error) {
+func (c *Client) DoRawWithOptions(method, url, uripath string, headers map[string][]string, body io.Reader, options *Options) (*http.Response, error) {
 	redirectstatus := &RedirectStatus{
 		FollowRedirects: options.FollowRedirects,
 		MaxRedirects:    c.Options.MaxRedirects,
@@ -92,17 +92,21 @@ func (c *Client) DoRawWithOptions(method, url, uripath string, headers map[strin
 	return c.do(method, url, uripath, headers, body, redirectstatus, options)
 }
 
-func (c *Client) getConn(protocol, host string, options Options) (Conn, error) {
+func (c *Client) getConn(protocol, host string, options *Options) (Conn, error) {
 	if options.Proxy != "" {
-		return c.dialer.DialWithProxy(protocol, host, c.Options.Proxy, c.Options.ProxyDialTimeout)
+		return c.dialer.DialWithProxy(protocol, host, c.Options.Proxy, c.Options.ProxyDialTimeout, options)
 	}
-	if options.Timeout < 0 {
-		options.Timeout = 0
+	var conn Conn
+	var err error
+	if options.Timeout > 0 {
+		conn, err = c.dialer.DialTimeout(protocol, host, options.Timeout, options)
+	} else {
+		conn, err = c.dialer.Dial(protocol, host, options)
 	}
-	return c.dialer.DialTimeout(protocol, host, options.Timeout)
+	return conn, err
 }
 
-func (c *Client) do(method, url, uripath string, headers map[string][]string, body io.Reader, redirectstatus *RedirectStatus, options Options) (*http.Response, error) {
+func (c *Client) do(method, url, uripath string, headers map[string][]string, body io.Reader, redirectstatus *RedirectStatus, options *Options) (*http.Response, error) {
 	protocol := "http"
 	if strings.HasPrefix(strings.ToLower(url), "https://") {
 		protocol = "https"

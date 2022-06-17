@@ -325,10 +325,9 @@ func (c *pipelineConnClient) init() {
 			// Keep restarting the worker if it fails (connection errors for example).
 			for {
 				if err := c.worker(); err != nil {
-					if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
-						// Throttle client reconnections on temporary errors
-						time.Sleep(time.Second)
-					}
+					w := <-c.chW
+					w.err = err
+					w.done <- struct{}{}
 				} else {
 					c.chLock.Lock()
 					stop := len(c.chR) == 0 && len(c.chW) == 0

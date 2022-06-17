@@ -39,6 +39,6 @@ func DoRaw(method, url, uripath string, headers map[string][]string, body io.Rea
 }
 
 // DoRawWithOptions does a raw request with some configuration
-func DoRawWithOptions(method, url, uripath string, headers map[string][]string, body io.Reader, options Options) (*http.Response, error) {
+func DoRawWithOptions(method, url, uripath string, headers map[string][]string, body io.Reader, options *Options) (*http.Response, error) {
 	return DefaultClient.DoRawWithOptions(method, url, uripath, headers, body, options)
 }

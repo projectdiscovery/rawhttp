@@ -17,10 +17,10 @@ import (
 // Dialer can dial a remote HTTP server.
 type Dialer interface {
 	// Dial dials a remote http server returning a Conn.
-	Dial(protocol, addr string) (Conn, error)
-	DialWithProxy(protocol, addr, proxyURL string, timeout time.Duration) (Conn, error)
+	Dial(protocol, addr string, options *Options) (Conn, error)
+	DialWithProxy(protocol, addr, proxyURL string, timeout time.Duration, options *Options) (Conn, error)
 	// Dial dials a remote http server with timeout returning a Conn.
-	DialTimeout(protocol, addr string, timeout time.Duration) (Conn, error)
+	DialTimeout(protocol, addr string, timeout time.Duration, options *Options) (Conn, error)
 }
 
 type dialer struct {
@@ -28,15 +28,15 @@ type dialer struct {
 	conns      map[string][]Conn // maps addr to a, possibly empty, slice of existing Conns
 }
 
-func (d *dialer) Dial(protocol, addr string) (Conn, error) {
-	return d.dialTimeout(protocol, addr, 0)
+func (d *dialer) Dial(protocol, addr string, options *Options) (Conn, error) {
+	return d.dialTimeout(protocol, addr, 0, options)
 }
 
-func (d *dialer) DialTimeout(protocol, addr string, timeout time.Duration) (Conn, error) {
-	return d.dialTimeout(protocol, addr, timeout)
+func (d *dialer) DialTimeout(protocol, addr string, timeout time.Duration, options *Options) (Conn, error) {
+	return d.dialTimeout(protocol, addr, timeout, options)
 }
 
-func (d *dialer) dialTimeout(protocol, addr string, timeout time.Duration) (Conn, error) {
+func (d *dialer) dialTimeout(protocol, addr string, timeout time.Duration, options *Options) (Conn, error) {
 	d.Lock()
 	if d.conns == nil {
 		d.conns = make(map[string][]Conn)
@@ -50,7 +50,7 @@ func (d *dialer) dialTimeout(protocol, addr string, timeout time.Duration) (Conn
 		}
 	}
 	d.Unlock()
-	c, err := clientDial(protocol, addr, timeout)
+	c, err := clientDial(protocol, addr, timeout, options)
 	return &conn{
 		Client: client.NewClient(c),
 		Conn:   c,
@@ -58,7 +58,7 @@ func (d *dialer) dialTimeout(protocol, addr string, timeout time.Duration) (Conn
 	}, err
 }
 
-func (d *dialer) DialWithProxy(protocol, addr, proxyURL string, timeout time.Duration) (Conn, error) {
+func (d *dialer) DialWithProxy(protocol, addr, proxyURL string, timeout time.Duration, options *Options) (Conn, error) {
 	var c net.Conn
 	u, err := url.Parse(proxyURL)
 	if err != nil {
@@ -87,14 +87,29 @@ func (d *dialer) DialWithProxy(protocol, addr, proxyURL string, timeout time.Dur
 	}, err
 }
 
-func clientDial(protocol, addr string, timeout time.Duration) (net.Conn, error) {
-	conn, err := net.DialTimeout("tcp", addr, timeout)
-	if protocol == "https" {
-		if conn, err = TlsHandshake(conn, addr); err != nil {
-			return nil, fmt.Errorf("tls handshake error: %w", err)
+func clientDial(protocol, addr string, timeout time.Duration, options *Options) (net.Conn, error) {
+	// http
+	if protocol == "http" {
+		if timeout > 0 {
+			return net.DialTimeout("tcp", addr, timeout)
 		}
+		return net.Dial("tcp", addr)
 	}
-	return conn, err
+
+	// https
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	if options.SNI != "" {
+		tlsConfig.ServerName = options.SNI
+	}
+	if timeout > 0 {
+		conn, err := net.DialTimeout("tcp", addr, timeout)
+		if err != nil {
+			return nil, err
+		}
+		tlsConn := tls.Client(conn, tlsConfig)
+		return tlsConn, tlsConn.Handshake()
+	}
+	return tls.Dial("tcp", addr, tlsConfig)
 }
 
 // TlsHandshake tls handshake on a plain connection
@@ -107,7 +122,7 @@ func TlsHandshake(conn net.Conn, addr string) (net.Conn, error) {
 
 	tlsConn := tls.Client(conn, &tls.Config{
 		InsecureSkipVerify: true,
-		ServerName: hostname,
+		ServerName:         hostname,
 	})
 	if err := tlsConn.Handshake(); err != nil {
 		conn.Close()
