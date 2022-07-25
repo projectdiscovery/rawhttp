@@ -1,6 +1,7 @@
 package rawhttp
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -91,9 +92,18 @@ func clientDial(protocol, addr string, timeout time.Duration, options *Options) 
 	// http
 	if protocol == "http" {
 		if timeout > 0 {
-			return net.DialTimeout("tcp", addr, timeout)
+			if options.FastDialer != nil {
+				ctxTimeout, _ := context.WithTimeout(context.Background(), timeout)
+				return options.FastDialer.Dial(ctxTimeout, "tcp", addr)
+			} else {
+				return net.DialTimeout("tcp", addr, timeout)
+			}
 		}
-		return net.Dial("tcp", addr)
+		if options.FastDialer != nil {
+			return options.FastDialer.Dial(context.Background(), "tcp", addr)
+		} else {
+			return net.Dial("tcp", addr)
+		}
 	}
 
 	// https
