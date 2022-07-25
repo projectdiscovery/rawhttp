@@ -93,6 +93,7 @@ func clientDial(protocol, addr string, timeout time.Duration, options *Options) 
 	if protocol == "http" {
 		if timeout > 0 {
 			if options.FastDialer != nil {
+				//nolint:govet // cancelled automatically by WithTimeout
 				ctxTimeout, _ := context.WithTimeout(context.Background(), timeout)
 				return options.FastDialer.Dial(ctxTimeout, "tcp", addr)
 			} else {
