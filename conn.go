@@ -1,6 +1,7 @@
 package rawhttp
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -88,9 +89,22 @@ func (d *dialer) DialWithProxy(protocol, addr, proxyURL string, timeout time.Dur
 }
 
 func clientDial(protocol, addr string, timeout time.Duration, options *Options) (net.Conn, error) {
+	var (
+		ctx    context.Context
+		cancel context.CancelFunc
+	)
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+	} else {
+		ctx = context.Background()
+	}
+
 	// http
 	if protocol == "http" {
-		if timeout > 0 {
+		if options.FastDialer != nil {
+			return options.FastDialer.Dial(ctx, "tcp", addr)
+		} else if timeout > 0 {
 			return net.DialTimeout("tcp", addr, timeout)
 		}
 		return net.Dial("tcp", addr)
@@ -101,7 +115,9 @@ func clientDial(protocol, addr string, timeout time.Duration, options *Options) 
 	if options.SNI != "" {
 		tlsConfig.ServerName = options.SNI
 	}
-	if timeout > 0 {
+	if options.FastDialer != nil {
+		return options.FastDialer.DialTLSWithConfig(ctx, "tcp", addr, tlsConfig)
+	} else if timeout > 0 {
 		conn, err := net.DialTimeout("tcp", addr, timeout)
 		if err != nil {
 			return nil, err
