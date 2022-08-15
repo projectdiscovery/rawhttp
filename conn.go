@@ -123,7 +123,7 @@ func clientDial(protocol, addr string, timeout time.Duration, options *Options) 
 			return nil, err
 		}
 		tlsConn := tls.Client(conn, tlsConfig)
-		return tlsConn, tlsConn.Handshake()
+		return tlsConn, tlsConn.HandshakeContext(ctx)
 	}
 	return tls.Dial("tcp", addr, tlsConfig)
 }
