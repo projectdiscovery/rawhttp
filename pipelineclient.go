@@ -2,7 +2,6 @@ package rawhttp
 
 import (
 	"io"
-	"io/ioutil"
 	"net/http"
 	stdurl "net/url"
 
@@ -114,7 +113,7 @@ func (c *PipelineClient) do(method, url, uripath string, headers map[string][]st
 		r.Header.Set(header.Key, header.Value)
 	}
 
-	r.Body = ioutil.NopCloser(resp.Body)
+	r.Body = io.NopCloser(resp.Body)
 
 	return &r, err
 }

@@ -9,12 +9,12 @@ import (
 )
 
 func main() {
-	swg := sizedwaitgroup.New(250)
+	swg := sizedwaitgroup.New(25)
 	pipeOptions := rawhttp.DefaultPipelineOptions
 	pipeOptions.Host = "127.0.0.1:10000"
 	pipeOptions.MaxConnections = 1
 	pipeclient := rawhttp.NewPipelineClient(pipeOptions)
-	for i := 0; i < 10000000; i++ {
+	for i := 0; i < 50; i++ {
 		swg.Add()
 		go func(swg *sizedwaitgroup.SizedWaitGroup) {
 			defer swg.Done()
