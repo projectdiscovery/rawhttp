@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	stdurl "net/url"
 	"strings"
@@ -167,7 +166,7 @@ func DumpRequestRaw(method, url, uripath string, headers map[string][]string, bo
 	if req.Body != nil {
 		var buf bytes.Buffer
 		tee := io.TeeReader(req.Body, &buf)
-		body, err := ioutil.ReadAll(tee)
+		body, err := io.ReadAll(tee)
 		if err != nil {
 			return nil, err
 		}
