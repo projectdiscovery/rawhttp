@@ -21,10 +21,6 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Test example server
-        run: go run .
-        working-directory: example/server
-
       - name: Test example client
         run: go run .
         working-directory: example/client
