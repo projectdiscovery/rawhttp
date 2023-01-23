@@ -6,7 +6,7 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/projectdiscovery/fastdialer v0.0.21
 	github.com/projectdiscovery/gologger v1.1.7
-	github.com/projectdiscovery/retryablehttp-go v1.0.8
+	github.com/projectdiscovery/retryablehttp-go v1.0.9
 	github.com/projectdiscovery/stringsutil v0.0.2
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/stretchr/testify v1.8.1
@@ -38,7 +38,7 @@ require (
 	github.com/projectdiscovery/iputil v0.0.2 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.3 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.19 // indirect
-	github.com/projectdiscovery/utils v0.0.4-0.20221201124851-f8524345b6d3 // indirect
+	github.com/projectdiscovery/utils v0.0.4-0.20230117135930-7371ae6a739d // indirect
 	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/ulikunitz/xz v0.5.7 // indirect
