@@ -6,8 +6,9 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/projectdiscovery/fastdialer v0.0.22
 	github.com/projectdiscovery/gologger v1.1.7
-	github.com/projectdiscovery/retryablehttp-go v1.0.9
+	github.com/projectdiscovery/retryablehttp-go v1.0.11-0.20230208204658-ebd3857af5df
 	github.com/projectdiscovery/stringsutil v0.0.2
+	github.com/projectdiscovery/utils v0.0.8-0.20230208204512-f4fb160b23b1
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/net v0.5.0
@@ -26,7 +27,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/mholt/archiver v3.1.1+incompatible // indirect
-	github.com/microcosm-cc/bluemonday v1.0.21 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.22 // indirect
 	github.com/miekg/dns v1.1.50 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -38,8 +39,7 @@ require (
 	github.com/projectdiscovery/iputil v0.0.2 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.3 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.20 // indirect
-	github.com/projectdiscovery/utils v0.0.8-0.20230207220018-0e486b130065 // indirect
-	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca // indirect
+	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/ulikunitz/xz v0.5.7 // indirect
 	github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6 // indirect
@@ -54,7 +54,7 @@ require (
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/mod v0.6.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/tools v0.2.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
