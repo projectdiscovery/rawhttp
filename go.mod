@@ -38,7 +38,7 @@ require (
 	github.com/projectdiscovery/iputil v0.0.2 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.3 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.20 // indirect
-	github.com/projectdiscovery/utils v0.0.4-0.20230117135930-7371ae6a739d // indirect
+	github.com/projectdiscovery/utils v0.0.8-0.20230207220018-0e486b130065 // indirect
 	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/ulikunitz/xz v0.5.7 // indirect

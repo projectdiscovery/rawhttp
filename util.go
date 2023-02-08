@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	stdurl "net/url"
 	"strings"
 
 	"github.com/projectdiscovery/rawhttp/client"
+	urlutil "github.com/projectdiscovery/utils/url"
 )
 
 // StatusError is a HTTP status error object
@@ -113,7 +113,7 @@ func DumpRequestRaw(method, url, uripath string, headers map[string][]string, bo
 	if headers == nil {
 		headers = make(map[string][]string)
 	}
-	u, err := stdurl.ParseRequestURI(url)
+	u, err := urlutil.ParseURL(url, true)
 	if err != nil {
 		return nil, err
 	}
@@ -130,8 +130,8 @@ func DumpRequestRaw(method, url, uripath string, headers map[string][]string, bo
 	if path == "" {
 		path = "/"
 	}
-	if u.RawQuery != "" {
-		path += "?" + u.RawQuery
+	if len(u.Params) > 0 {
+		path += "?" + u.Params.Encode()
 	}
 	// override if custom one is specified
 	if uripath != "" {

@@ -115,6 +115,8 @@ github.com/projectdiscovery/stringsutil v0.0.2 h1:uzmw3IVLJSMW1kEg8eCStG/cGbYYZA
 github.com/projectdiscovery/stringsutil v0.0.2/go.mod h1:EJ3w6bC5fBYjVou6ryzodQq37D5c6qbAYQpGmAy+DC0=
 github.com/projectdiscovery/utils v0.0.4-0.20230117135930-7371ae6a739d h1:iB/n2/NL4oh1IaEcqX6pBxj0WHfYN7finzNOKVNVISM=
 github.com/projectdiscovery/utils v0.0.4-0.20230117135930-7371ae6a739d/go.mod h1:PCwA5YuCYWPgHaGiZmr53/SA9iGQmAnw7DSHuhr8VPQ=
+github.com/projectdiscovery/utils v0.0.8-0.20230207220018-0e486b130065 h1:nguDaV3Ye3j3vLah56pRI+wK25JSJF0eGE7+19ZZ0dM=
+github.com/projectdiscovery/utils v0.0.8-0.20230207220018-0e486b130065/go.mod h1:PCwA5YuCYWPgHaGiZmr53/SA9iGQmAnw7DSHuhr8VPQ=
 github.com/remeh/sizedwaitgroup v1.0.0 h1:VNGGFwNo/R5+MJBf6yrsr110p0m4/OX4S3DCy7Kyl5E=
 github.com/remeh/sizedwaitgroup v1.0.0/go.mod h1:3j2R4OIe/SeS6YDhICBy22RWjJC5eNCJ1V+9+NVNYlo=
 github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZVejAe8=
