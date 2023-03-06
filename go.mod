@@ -8,10 +8,10 @@ require (
 	github.com/projectdiscovery/gologger v1.1.7
 	github.com/projectdiscovery/retryablehttp-go v1.0.11-0.20230208204658-ebd3857af5df
 	github.com/projectdiscovery/stringsutil v0.0.2
-	github.com/projectdiscovery/utils v0.0.8-0.20230208204512-f4fb160b23b1
+	github.com/projectdiscovery/utils v0.0.14
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/net v0.6.0
+	golang.org/x/net v0.7.0
 )
 
 require (
