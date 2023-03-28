@@ -15,7 +15,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"internal/cfg"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,6 +24,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/internal/cfg"
 )
 
 // Builder reports the name of the builder running this test
