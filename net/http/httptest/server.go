@@ -7,18 +7,21 @@
 package httptest
 
 import (
-	"crypto/tls"
 	"crypto/x509"
 	"flag"
 	"fmt"
 	"log"
 	"net"
-	"net/http"
-	"net/http/internal/testcert"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
+
+	"github.com/projectdiscovery/rawhttp/net/http/internal/testcert"
 )
 
 // A Server is an HTTP server listening on a system-chosen port on the

@@ -8,8 +8,9 @@ package cpu_test
 
 import (
 	. "internal/cpu"
-	"internal/godebug"
 	"testing"
+
+	"github.com/projectdiscovery/rawhttp/internal/godebug"
 )
 
 func TestX86ifAVX2hasAVX(t *testing.T) {

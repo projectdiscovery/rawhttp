@@ -13,13 +13,15 @@ import (
 	"log"
 	"mime"
 	"net"
-	"net/http"
-	"net/http/internal/ascii"
 	"net/textproto"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
+
+	"github.com/projectdiscovery/rawhttp/net/http/internal/ascii"
 
 	"golang.org/x/net/http/httpguts"
 )

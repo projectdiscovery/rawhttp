@@ -11,10 +11,11 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
 )
 
 // drainBody reads all of b to memory and then returns two equivalent

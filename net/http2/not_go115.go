@@ -9,7 +9,7 @@ package http2
 
 import (
 	"context"
-	"crypto/tls"
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
 )
 
 // dialTLSWithContext opens a TLS connection.

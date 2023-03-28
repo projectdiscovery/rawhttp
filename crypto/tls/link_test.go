@@ -31,7 +31,7 @@ func TestLinkerGC(t *testing.T) {
 		{
 			name: "empty_import",
 			program: `package main
-import _ "crypto/tls"
+import _ "github.com/projectdiscovery/rawhttp/crypto/tls"
 func main() {}
 `,
 			bad: []string{
@@ -43,7 +43,7 @@ func main() {}
 		{
 			name: "client_and_server",
 			program: `package main
-import "crypto/tls"
+import "github.com/projectdiscovery/rawhttp/crypto/tls"
 func main() {
   tls.Dial("", "", nil)
   tls.Server(nil, nil)
@@ -57,7 +57,7 @@ func main() {
 		{
 			name: "only_client",
 			program: `package main
-import "crypto/tls"
+import "github.com/projectdiscovery/rawhttp/crypto/tls"
 func main() { tls.Dial("", "", nil) }
 `,
 			want: []string{

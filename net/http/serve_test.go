@@ -12,7 +12,6 @@ import (
 	"compress/gzip"
 	"compress/zlib"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,12 +20,6 @@ import (
 	"log"
 	"math/rand"
 	"net"
-	. "net/http"
-	"net/http/httptest"
-	"net/http/httptrace"
-	"net/http/httputil"
-	"net/http/internal"
-	"net/http/internal/testcert"
 	"net/url"
 	"os"
 	"os/exec"
@@ -42,6 +35,18 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/net/http/internal"
+
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
+	"github.com/projectdiscovery/rawhttp/net/http/httptrace"
+
+	"github.com/projectdiscovery/rawhttp/net/http/httputil"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
+
+	. "github.com/projectdiscovery/rawhttp/net/http"
+	"github.com/projectdiscovery/rawhttp/net/http/internal/testcert"
 )
 
 type dummyAddr string

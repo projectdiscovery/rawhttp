@@ -15,7 +15,6 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/rand"
-	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
 	"errors"
@@ -26,11 +25,6 @@ import (
 	"log"
 	mrand "math/rand"
 	"net"
-	. "net/http"
-	"net/http/httptest"
-	"net/http/httptrace"
-	"net/http/httputil"
-	"net/http/internal/testcert"
 	"net/textproto"
 	"net/url"
 	"os"
@@ -43,6 +37,15 @@ import (
 	"testing"
 	"testing/iotest"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/net/http/httputil"
+
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
+	"github.com/projectdiscovery/rawhttp/net/http/httptrace"
+	"github.com/projectdiscovery/rawhttp/net/http/internal/testcert"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
+	. "github.com/projectdiscovery/rawhttp/net/http"
 
 	"golang.org/x/net/http/httpguts"
 )

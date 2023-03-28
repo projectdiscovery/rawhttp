@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/hex"
 	"errors"
 	"flag"
@@ -18,9 +17,6 @@ import (
 	"log"
 	"math/rand"
 	"net"
-	"net/http"
-	"net/http/httptest"
-	"net/http/httptrace"
 	"net/textproto"
 	"net/url"
 	"os"
@@ -33,6 +29,12 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
+	"github.com/projectdiscovery/rawhttp/net/http/httptrace"
 
 	"golang.org/x/net/http2/hpack"
 )
@@ -1780,7 +1782,7 @@ func TestTransportChecksRequestHeaderListSize(t *testing.T) {
 
 	// Get the ClientConn associated with the request and validate
 	// peerMaxHeaderListSize.
-	addr := authorityAddr(req.URL.Scheme, req.URL.Host)
+	addr := authorityAddr(req.URL.Scheme, req.URL.Host, false)
 	cc, err := tr.connPool().GetClientConn(req, addr)
 	if err != nil {
 		t.Fatalf("GetClientConn: %v", err)
@@ -4207,7 +4209,7 @@ func TestAuthorityAddr(t *testing.T) {
 		{"https", "[::1]", "[::1]:443"},
 	}
 	for _, tt := range tests {
-		got := authorityAddr(tt.scheme, tt.authority)
+		got := authorityAddr(tt.scheme, tt.authority, false)
 		if got != tt.want {
 			t.Errorf("authorityAddr(%q, %q) = %q; want %q", tt.scheme, tt.authority, got, tt.want)
 		}

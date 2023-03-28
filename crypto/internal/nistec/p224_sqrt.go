@@ -5,8 +5,9 @@
 package nistec
 
 import (
-	"crypto/internal/nistec/fiat"
 	"sync"
+
+	"github.com/projectdiscovery/rawhttp/crypto/internal/nistec/fiat"
 )
 
 var p224GG *[96]fiat.P224Element

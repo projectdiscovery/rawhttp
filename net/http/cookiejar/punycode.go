@@ -8,9 +8,10 @@ package cookiejar
 
 import (
 	"fmt"
-	"net/http/internal/ascii"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/projectdiscovery/rawhttp/net/http/internal/ascii"
 )
 
 // These parameter values are specified in section 5.

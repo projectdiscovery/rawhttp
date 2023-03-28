@@ -9,9 +9,10 @@ import (
 	"errors"
 	"io"
 	"net"
-	"net/http"
 	"net/textproto"
 	"sync"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
 )
 
 var (

@@ -9,7 +9,6 @@ import (
 	"compress/gzip"
 	"compress/zlib"
 	"context"
-	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
@@ -17,8 +16,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"os/exec"
 	"reflect"
@@ -29,6 +26,11 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
 
 	"golang.org/x/net/http2/hpack"
 )

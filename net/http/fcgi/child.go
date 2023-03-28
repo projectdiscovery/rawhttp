@@ -12,11 +12,12 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
-	"net/http/cgi"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
+	"github.com/projectdiscovery/rawhttp/net/http/cgi"
 )
 
 // request holds the state for an in-progress request. As soon as it's complete,

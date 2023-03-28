@@ -7,13 +7,14 @@ package nistec_test
 import (
 	"bytes"
 	"crypto/elliptic"
-	"crypto/internal/nistec"
 	"fmt"
 	"math/big"
 	"math/rand"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/projectdiscovery/rawhttp/crypto/internal/nistec"
 )
 
 func TestAllocations(t *testing.T) {

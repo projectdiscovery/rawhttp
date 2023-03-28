@@ -11,7 +11,9 @@ require (
 	github.com/projectdiscovery/utils v0.0.18
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/stretchr/testify v1.8.2
+	golang.org/x/crypto v0.7.0
 	golang.org/x/net v0.8.0
+	golang.org/x/term v0.6.0
 )
 
 require (
@@ -51,7 +53,6 @@ require (
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect

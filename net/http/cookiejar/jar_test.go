@@ -6,12 +6,13 @@ package cookiejar
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"sort"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
 )
 
 // tNow is the synthetic current time used as now during testing.

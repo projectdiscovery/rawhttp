@@ -6,11 +6,13 @@ package cpu_test
 
 import (
 	. "internal/cpu"
-	"internal/godebug"
-	"internal/testenv"
 	"os"
 	"os/exec"
 	"testing"
+
+	"github.com/projectdiscovery/rawhttp/internal/testenv"
+
+	"github.com/projectdiscovery/rawhttp/internal/godebug"
 )
 
 func MustHaveDebugOptionsSupport(t *testing.T) {

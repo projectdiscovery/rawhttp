@@ -12,16 +12,11 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha1"
-	"crypto/tls"
 	"fmt"
 	"hash"
 	"io"
 	"log"
 	"net"
-	. "net/http"
-	"net/http/httptest"
-	"net/http/httptrace"
-	"net/http/httputil"
 	"net/textproto"
 	"net/url"
 	"os"
@@ -33,6 +28,15 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
+
+	"github.com/projectdiscovery/rawhttp/net/http/httptrace"
+	"github.com/projectdiscovery/rawhttp/net/http/httputil"
+
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
+
+	. "github.com/projectdiscovery/rawhttp/net/http"
 )
 
 type clientServerTest struct {

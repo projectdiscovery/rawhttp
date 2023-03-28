@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
-	"net/http/httptest"
-	"net/http/httputil"
 	"net/url"
 	"strings"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
+	"github.com/projectdiscovery/rawhttp/net/http/httputil"
 )
 
 func ExampleDumpRequest() {

@@ -8,7 +8,7 @@
 package http2
 
 import (
-	"crypto/tls"
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
 	"net"
 )
 

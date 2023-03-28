@@ -5,8 +5,9 @@
 package edwards25519
 
 import (
-	"crypto/internal/edwards25519/field"
 	"errors"
+
+	"github.com/projectdiscovery/rawhttp/crypto/internal/edwards25519/field"
 )
 
 // Point types.

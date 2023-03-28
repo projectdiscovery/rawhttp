@@ -9,9 +9,10 @@ package nistec_test
 import (
 	"bytes"
 	"crypto/elliptic"
-	"crypto/internal/nistec"
 	"math/big"
 	"testing"
+
+	"github.com/projectdiscovery/rawhttp/crypto/internal/nistec"
 )
 
 func TestP256OrdInverse(t *testing.T) {

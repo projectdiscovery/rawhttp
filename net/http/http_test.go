@@ -70,7 +70,7 @@ func TestCleanHost(t *testing.T) {
 		{"goph\u0065\u0301r.nfd", "xn--gophr-esa.nfd"}, // NFD input
 	}
 	for _, tt := range tests {
-		got := cleanHost(tt.in)
+		got := cleanHost(tt.in, false)
 		if tt.want != got {
 			t.Errorf("cleanHost(%q) = %q, want %q", tt.in, got, tt.want)
 		}
@@ -118,7 +118,7 @@ func TestOmitHTTP2(t *testing.T) {
 	}
 	t.Parallel()
 	goTool := testenv.GoToolPath(t)
-	out, err := exec.Command(goTool, "test", "-short", "-tags=nethttpomithttp2", "net/http").CombinedOutput()
+	out, err := exec.Command(goTool, "test", "-short", "-tags=nethttpomithttp2", "github.com/projectdiscovery/rawhttp/net/http").CombinedOutput()
 	if err != nil {
 		t.Fatalf("go test -short failed: %v, %s", err, out)
 	}
@@ -130,7 +130,7 @@ func TestOmitHTTP2(t *testing.T) {
 func TestOmitHTTP2Vet(t *testing.T) {
 	t.Parallel()
 	goTool := testenv.GoToolPath(t)
-	out, err := exec.Command(goTool, "vet", "-tags=nethttpomithttp2", "net/http").CombinedOutput()
+	out, err := exec.Command(goTool, "vet", "-tags=nethttpomithttp2", "github.com/projectdiscovery/rawhttp/net/http").CombinedOutput()
 	if err != nil {
 		t.Fatalf("go vet failed: %v, %s", err, out)
 	}

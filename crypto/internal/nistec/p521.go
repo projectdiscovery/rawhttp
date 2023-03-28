@@ -7,7 +7,7 @@
 package nistec
 
 import (
-	"crypto/internal/nistec/fiat"
+	"github.com/projectdiscovery/rawhttp/crypto/internal/nistec/fiat"
 	"crypto/subtle"
 	"errors"
 	"sync"

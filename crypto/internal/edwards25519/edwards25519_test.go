@@ -5,12 +5,13 @@
 package edwards25519
 
 import (
-	"crypto/internal/edwards25519/field"
 	"encoding/hex"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/projectdiscovery/rawhttp/crypto/internal/edwards25519/field"
 )
 
 var B = NewGeneratorPoint()

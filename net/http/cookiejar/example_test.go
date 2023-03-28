@@ -7,10 +7,12 @@ package cookiejar_test
 import (
 	"fmt"
 	"log"
-	"net/http"
-	"net/http/cookiejar"
-	"net/http/httptest"
 	"net/url"
+
+	"github.com/projectdiscovery/rawhttp/net/http/cookiejar"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
 )
 
 func ExampleNew() {

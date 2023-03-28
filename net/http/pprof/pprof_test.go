@@ -7,11 +7,8 @@ package pprof
 import (
 	"bytes"
 	"fmt"
-	"internal/profile"
 	"internal/testenv"
 	"io"
-	"net/http"
-	"net/http/httptest"
 	"runtime"
 	"runtime/pprof"
 	"strings"
@@ -19,6 +16,10 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/internal/profile"
+	"github.com/projectdiscovery/rawhttp/net/http"
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
 )
 
 // TestDescriptions checks that the profile names under runtime/pprof package

@@ -14,13 +14,14 @@ import (
 	"fmt"
 	"internal/testenv"
 	"io"
-	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
 )
 
 // This test is a CGI host (testing host.go) that runs its own binary

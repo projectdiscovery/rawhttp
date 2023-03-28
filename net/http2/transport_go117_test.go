@@ -9,10 +9,12 @@ package http2
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
-	"net/http"
-	"net/http/httptest"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
 
 	"testing"
 )

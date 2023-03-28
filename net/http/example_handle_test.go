@@ -7,8 +7,9 @@ package http_test
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"sync"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
 )
 
 type countHandler struct {

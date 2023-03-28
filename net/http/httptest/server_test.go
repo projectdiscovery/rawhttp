@@ -8,9 +8,10 @@ import (
 	"bufio"
 	"io"
 	"net"
-	"net/http"
 	"sync"
 	"testing"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
 )
 
 type newServerFunc func(http.Handler) *Server

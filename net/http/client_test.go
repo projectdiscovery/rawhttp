@@ -9,7 +9,6 @@ package http_test
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -17,9 +16,6 @@ import (
 	"io"
 	"log"
 	"net"
-	. "net/http"
-	"net/http/cookiejar"
-	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"runtime"
@@ -29,6 +25,13 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	. "github.com/projectdiscovery/rawhttp/net/http"
+
+	"github.com/projectdiscovery/rawhttp/net/http/cookiejar"
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
 )
 
 var robotsTxtHandler = HandlerFunc(func(w ResponseWriter, r *Request) {

@@ -8,13 +8,15 @@ package http
 
 import (
 	"bytes"
-	"crypto/tls"
 	"errors"
 	"io"
 	"net"
-	"net/http/internal/testcert"
 	"strings"
 	"testing"
+
+	"github.com/projectdiscovery/rawhttp/net/http/internal/testcert"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
 )
 
 // Issue 15446: incorrect wrapping of errors when server closes an idle connection.

@@ -8,14 +8,16 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
-	"net/http"
-	"net/http/httptest"
 	"testing"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
 
 	"golang.org/x/net/http2"
 )

@@ -14,9 +14,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
-	"net/http/httptest"
-	"net/http/internal/ascii"
 	"net/url"
 	"os"
 	"reflect"
@@ -26,6 +23,11 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
+	"github.com/projectdiscovery/rawhttp/net/http/internal/ascii"
 )
 
 const fakeHopHeader = "X-Fake-Hop-Header-For-Test"

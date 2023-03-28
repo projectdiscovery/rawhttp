@@ -8,10 +8,11 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
 )
 
 var sizeTests = []struct {

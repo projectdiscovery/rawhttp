@@ -18,10 +18,11 @@ import (
 	"io"
 	"log"
 	"net"
-	"net/http"
 	"net/textproto"
 	"os"
 	"strings"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
 
 	"golang.org/x/net/http/httpguts"
 	"golang.org/x/net/http2"

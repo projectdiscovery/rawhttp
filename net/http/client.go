@@ -11,7 +11,6 @@ package http
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -23,6 +22,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
 
 	"github.com/projectdiscovery/rawhttp/net/http/internal/ascii"
 )
@@ -597,11 +598,12 @@ func (c *Client) do(req *Request) (retres *Response, reterr error) {
 	}
 
 	var (
-		deadline      = c.deadline()
-		reqs          []*Request
-		resp          *Response
-		copyHeaders   = c.makeHeadersCopier(req)
-		reqBodyClosed = false // have we closed the current req.Body?
+		deadline                   = c.deadline()
+		reqs                       []*Request
+		resp, lastresp             *Response
+		copyHeaders                = c.makeHeadersCopier(req)
+		reqBodyClosed              = false // have we closed the current req.Body?
+		shouldUseLastValidResponse = req.UseLastValidResponse
 
 		// Redirect behavior:
 		redirectMethod string
@@ -713,6 +715,9 @@ func (c *Client) do(req *Request) (retres *Response, reterr error) {
 		reqs = append(reqs, req)
 		var err error
 		var didTimeout func() bool
+		if shouldUseLastValidResponse && resp != nil {
+			lastresp = resp
+		}
 		if resp, didTimeout, err = c.send(req, deadline); err != nil {
 			// c.send() always closes req.Body
 			reqBodyClosed = true
@@ -721,6 +726,9 @@ func (c *Client) do(req *Request) (retres *Response, reterr error) {
 					err:     err.Error() + " (Client.Timeout exceeded while awaiting headers)",
 					timeout: true,
 				}
+			}
+			if shouldUseLastValidResponse && lastresp != nil {
+				return lastresp, uerr(err)
 			}
 			return nil, uerr(err)
 		}

@@ -24,18 +24,20 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net"
-	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/hpack"

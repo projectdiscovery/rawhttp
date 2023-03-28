@@ -7,14 +7,17 @@ package http_test
 import (
 	"bufio"
 	"bytes"
-	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"io"
-	. "net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
+
+	"github.com/projectdiscovery/rawhttp/crypto/tls"
+
+	. "github.com/projectdiscovery/rawhttp/net/http"
 )
 
 func TestNextProtoUpgrade(t *testing.T) {

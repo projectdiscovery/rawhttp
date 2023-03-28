@@ -62,10 +62,8 @@ import (
 	"context"
 	"fmt"
 	"html"
-	"internal/profile"
 	"io"
 	"log"
-	"net/http"
 	"net/url"
 	"os"
 	"runtime"
@@ -75,6 +73,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/net/http"
+
+	"github.com/projectdiscovery/rawhttp/internal/profile"
 )
 
 func init() {

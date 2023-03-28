@@ -14,8 +14,6 @@ import (
 	"mime"
 	"mime/multipart"
 	"net"
-	. "net/http"
-	"net/http/httptest"
 	"net/url"
 	"os"
 	"os/exec"
@@ -27,6 +25,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/projectdiscovery/rawhttp/net/http/httptest"
+
+	. "github.com/projectdiscovery/rawhttp/net/http"
 )
 
 const (
