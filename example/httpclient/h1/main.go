@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/url"
 
 	"github.com/projectdiscovery/rawhttp/crypto/tls"
 
@@ -11,13 +12,12 @@ import (
 
 func main() {
 	target := "http://scanme.sh"
-	client := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
 		},
 	}
+	client := &http.Client{Transport: transport}
 
 	log.Println("standard request")
 	req, err := http.NewRequest(http.MethodGet, target+"/standard", nil)
@@ -51,6 +51,19 @@ func main() {
 	}
 	// add non-rfc header
 	req.Unsafe = true
+	reqDump, respDump, err = sendAndDump(client, req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("request:\n%s\nresponse:\n%s", string(reqDump), string(respDump))
+
+	log.Println("request with proxy (burp/proxify must be listening on port 8080)")
+	proxyURL, _ := url.Parse("http://127.0.0.1:8080")
+	transport.Proxy = http.ProxyURL(proxyURL)
+	req, err = http.NewRequest(http.MethodGet, target, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 	reqDump, respDump, err = sendAndDump(client, req)
 	if err != nil {
 		log.Fatal(err)
