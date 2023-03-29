@@ -677,7 +677,7 @@ func (r *Request) write(w io.Writer, usingProxy bool, extraHeaders Header, waitF
 	}
 
 	if r.Unsafe {
-		err = r.Header.writeSubset(w, nil, trace, HeaderOptions{Separator: r.HeaderSeparator, Terminator: r.NewLine /*, Unsafe: r.Unsafe*/})
+		err = r.Header.writeSubset(w, nil, trace, HeaderOptions{Separator: r.HeaderSeparator, Terminator: r.NewLine, Unsafe: r.Unsafe})
 	} else {
 		err = r.Header.writeSubset(w, reqWriteExcludeHeader, trace, DefaultHeaderOptions)
 	}

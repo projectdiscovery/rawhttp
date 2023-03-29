@@ -983,7 +983,7 @@ func (t *Transport) tryPutIdleConn(pconn *persistConn) error {
 	}
 	for _, exist := range idles {
 		if exist == pconn {
-			log.Fatalf("dup idle pconn %p in freelist", pconn)
+			log.Panicf("dup idle pconn %p in freelist", pconn)
 		}
 	}
 	t.idleConn[key] = append(idles, pconn)
