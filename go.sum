@@ -111,8 +111,8 @@ github.com/projectdiscovery/retryablehttp-go v1.0.16 h1:xrEK9VVkLf0eN4bYOTc2Pg0q
 github.com/projectdiscovery/retryablehttp-go v1.0.16/go.mod h1:9m76To4lNgBtVfqADzLxZg1wWajv6y/uYMWCOs1Olo8=
 github.com/projectdiscovery/stringsutil v0.0.2 h1:uzmw3IVLJSMW1kEg8eCStG/cGbYYZAja8BH3LqqJXMA=
 github.com/projectdiscovery/stringsutil v0.0.2/go.mod h1:EJ3w6bC5fBYjVou6ryzodQq37D5c6qbAYQpGmAy+DC0=
-github.com/projectdiscovery/utils v0.0.26 h1:89t05av9r5gtHBZLCiEkid1rrUjHlwKppz5z5iYzeG0=
-github.com/projectdiscovery/utils v0.0.26/go.mod h1:lCiVsbo79iqy4ihUQWUY4ywz0J13Mqudirgk+IV767o=
+github.com/projectdiscovery/utils v0.0.31 h1:IgwzYpqLLYSA8aMq5JCoErH8Fqo/bsl78+Yxj5uX1aY=
+github.com/projectdiscovery/utils v0.0.31/go.mod h1:CmTHhNchGCzuxED52xx8LuzlP144LOgoNCBQ8WTZ0ks=
 github.com/remeh/sizedwaitgroup v1.0.0 h1:VNGGFwNo/R5+MJBf6yrsr110p0m4/OX4S3DCy7Kyl5E=
 github.com/remeh/sizedwaitgroup v1.0.0/go.mod h1:3j2R4OIe/SeS6YDhICBy22RWjJC5eNCJ1V+9+NVNYlo=
 github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZVejAe8=
