@@ -3,9 +3,10 @@ package rawhttp
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 	"time"
+
+	"net/http"
 
 	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
 	urlutil "github.com/projectdiscovery/utils/url"
