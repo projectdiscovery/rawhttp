@@ -130,7 +130,7 @@ func DumpRequestRaw(method, url, uripath string, headers map[string][]string, bo
 	if path == "" {
 		path = "/"
 	}
-	if len(u.Params) > 0 {
+	if !u.Params.IsEmpty() {
 		path += "?" + u.Params.Encode()
 	}
 	// override if custom one is specified
