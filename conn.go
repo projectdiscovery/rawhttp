@@ -3,17 +3,24 @@ package rawhttp
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/projectdiscovery/rawhttp/client"
 	"github.com/projectdiscovery/rawhttp/proxy"
+	ztls "github.com/zmap/zcrypto/tls"
 )
+
+// DisableZtlsFallback disables ztls fallback when tls handshake fails
+// can also be set using the environment variable DISABLE_ZTLS_FALLBACK
+var DisableZtlsFallback = false
 
 // Dialer can dial a remote HTTP server.
 type Dialer interface {
@@ -111,21 +118,33 @@ func clientDial(protocol, addr string, timeout time.Duration, options *Options) 
 	}
 
 	// https
-	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	tlsConfig := &tls.Config{InsecureSkipVerify: true, Renegotiation: tls.RenegotiateOnceAsClient}
 	if options.SNI != "" {
 		tlsConfig.ServerName = options.SNI
 	}
+
+	// currently fastdialer tls dial and ztls fallback are mutually exclusive
+	// TODO: add support for fallback in fastDialer.DialZTLS()
 	if options.FastDialer != nil {
 		return options.FastDialer.DialTLSWithConfig(ctx, "tcp", addr, tlsConfig)
-	} else if timeout > 0 {
-		conn, err := net.DialTimeout("tcp", addr, timeout)
-		if err != nil {
-			return nil, err
-		}
-		tlsConn := tls.Client(conn, tlsConfig)
-		return tlsConn, tlsConn.HandshakeContext(ctx)
+
 	}
-	return tls.Dial("tcp", addr, tlsConfig)
+
+	var dialer *net.Dialer
+	if timeout > 0 {
+		dialer = &net.Dialer{Timeout: timeout}
+	} else {
+		dialer = &net.Dialer{Timeout: 8 * time.Second} // should be more than enough
+	}
+	tlsConn, err := tls.DialWithDialer(dialer, "tcp", addr, tlsConfig)
+	if err != nil && !DisableZtlsFallback && !errors.Is(err, os.ErrDeadlineExceeded) {
+		return ztls.DialWithDialer(dialer, "tcp", addr, &ztls.Config{
+			CipherSuites:       ztls.ChromeCiphers,
+			ServerName:         tlsConfig.ServerName,
+			InsecureSkipVerify: true,
+		})
+	}
+	return tlsConn, err
 }
 
 // TlsHandshake tls handshake on a plain connection
@@ -152,7 +171,18 @@ func TlsHandshake(conn net.Conn, addr string, timeout time.Duration) (net.Conn, 
 		ServerName:         hostname,
 	})
 	if err := tlsConn.HandshakeContext(ctx); err != nil {
-		conn.Close()
+		if !errors.Is(err, os.ErrDeadlineExceeded) && !DisableZtlsFallback {
+			// fallback to ztls
+			ztlsConn := ztls.Client(conn, &ztls.Config{
+				InsecureSkipVerify: true,
+				ServerName:         hostname,
+				CipherSuites:       ztls.ChromeCiphers,
+			})
+			if err := ztlsConn.Handshake(); err != nil {
+				return nil, err
+			}
+			return ztlsConn, nil
+		}
 		return nil, err
 	}
 	return tlsConn, nil
@@ -180,4 +210,11 @@ func (c *conn) Release() {
 	defer c.dialer.Unlock()
 	addr := c.Conn.RemoteAddr().String()
 	c.dialer.conns[addr] = append(c.dialer.conns[addr], c)
+}
+
+func init() {
+	value := os.Getenv("DISABLE_ZTLS_FALLBACK")
+	if strings.EqualFold(value, "true") {
+		DisableZtlsFallback = true
+	}
 }
