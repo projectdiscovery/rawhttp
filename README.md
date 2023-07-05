@@ -6,6 +6,15 @@ rawhttp is a Go package for making HTTP requests in a raw way.
 - Forked and adapted from [https://github.com/gorilla/http](https://github.com/gorilla/http) and [https://github.com/valyala/fasthttp](https://github.com/valyala/fasthttp)
 - The original idea is inspired by [@tomnomnom/rawhttp](https://github.com/tomnomnom/rawhttp) work
 
+
+### ZTLS fallback support
+
+### ZTLS Fallback
+
+`rawhttp` by default fallbacks to using zcrypto when there is an error in TLS handshake (ex: ` insufficient security level` etc ). This is done to support older TLS versions and ciphers. This can be disabled by setting `rawhttp.DisableZtlsFallback` to `true` or by using `DISABLE_ZTLS_FALLBACK` environment variable. when falling back to ztls, `ChromeCiphers` are used
+
+
+
 # Example
 
 First you need to declare a `server`
