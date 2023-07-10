@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/projectdiscovery/fastdialer/fastdialer"
-	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/rawhttp/client"
 )
 
@@ -31,13 +30,4 @@ var DefaultOptions = &Options{
 	MaxRedirects:           10,
 	AutomaticHostHeader:    true,
 	AutomaticContentLength: true,
-}
-
-func init() {
-	fd, err := fastdialer.NewDialer(fastdialer.DefaultOptions)
-	if err == nil {
-		DefaultOptions.FastDialer = fd
-		return
-	}
-	gologger.Error().Msgf("Could not initialize fastdialer: %s\n", err)
 }

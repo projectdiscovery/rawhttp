@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/projectdiscovery/fastdialer/fastdialer"
+	"github.com/projectdiscovery/gologger"
 	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
 	urlutil "github.com/projectdiscovery/utils/url"
 )
@@ -32,6 +34,13 @@ func NewClient(options *Options) *Client {
 	client := &Client{
 		dialer:  new(dialer),
 		Options: options,
+	}
+	if options.FastDialer == nil {
+		var err error
+		options.FastDialer, err = fastdialer.NewDialer(fastdialer.DefaultOptions)
+		if err != nil {
+			gologger.Error().Msgf("Could not create fast dialer: %s\n", err)
+		}
 	}
 	return client
 }
@@ -89,6 +98,13 @@ func (c *Client) DoRawWithOptions(method, url, uripath string, headers map[strin
 		MaxRedirects:    c.Options.MaxRedirects,
 	}
 	return c.do(method, url, uripath, headers, body, redirectstatus, options)
+}
+
+// Close closes client and any resources it holds
+func (c *Client) Close() {
+	if c.Options.FastDialer != nil {
+		c.Options.FastDialer.Close()
+	}
 }
 
 func (c *Client) getConn(protocol, host string, options *Options) (Conn, error) {
