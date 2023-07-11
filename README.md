@@ -1,5 +1,11 @@
 # rawhttp
 
+[![License](https://img.shields.io/github/license/projectdiscovery/rawhttp)](LICENSE.md)
+![Go version](https://img.shields.io/github/go-mod/go-version/projectdiscovery/rawhttp?filename=go.mod)
+[![Release](https://img.shields.io/github/release/projectdiscovery/rawhttp)](https://github.com/projectdiscovery/rawhttp/releases/)
+[![Checks](https://github.com/projectdiscovery/rawhttp/actions/workflows/build_test.yaml/badge.svg)](https://github.com/projectdiscovery/rawhttp/actions/workflows/build_test.yaml)
+[![GoDoc](https://img.shields.io/badge/go-reference-blue)](https://pkg.go.dev/github.com/projectdiscovery/rawhttp)
+
 rawhttp is a Go package for making HTTP requests in a raw way.
 
 
@@ -7,82 +13,13 @@ rawhttp is a Go package for making HTTP requests in a raw way.
 - The original idea is inspired by [@tomnomnom/rawhttp](https://github.com/tomnomnom/rawhttp) work
 
 
-### ZTLS fallback support
+# Library Usage
 
-### ZTLS Fallback
+A simple example to get started with rawhttp is available at [examples](./example/simple/main.go). For documentation, please refer [godoc](https://pkg.go.dev/github.com/projectdiscovery/rawhttp)
 
-`rawhttp` by default fallbacks to using zcrypto when there is an error in TLS handshake (ex: ` insufficient security level` etc ). This is done to support older TLS versions and ciphers. This can be disabled by setting `rawhttp.DisableZtlsFallback` to `true` or by using `DISABLE_ZTLS_FALLBACK` environment variable. when falling back to ztls, `ChromeCiphers` are used
+## Note
 
-
-
-# Example
-
-First you need to declare a `server`
-
-```go
-...
-...
-
-func headers(w http.ResponseWriter, req *http.Request) {
-	for name, headers := range req.Header {
-		for _, h := range headers {
-			fmt.Fprintf(w, "%v: %v\n", name, h)
-		}
-	}
-}
-
-func main() {
-	http.HandleFunc("/headers", headers)
-	if err := http.ListenAndServe(":10000", nil); err != nil {
-		gologger.Fatal().Msgf("Could not listen and serve: %s\n", err)
-	}
-}
-```
-
-```
-go run server.go
-```
-
-Second you need to start the client
-
-```go
-func main() {
-    host := "127.0.0.1:10000"
-	swg := sizedwaitgroup.New(25)
-	pipeOptions := rawhttp.DefaultPipelineOptions
-	pipeOptions.Host = host
-	pipeOptions.MaxConnections = 1
-	pipeclient := rawhttp.NewPipelineClient(pipeOptions)
-	for i := 0; i < 50; i++ {
-		swg.Add()
-		go func(swg *sizedwaitgroup.SizedWaitGroup) {
-			defer swg.Done()
-			req, err := http.NewRequest("GET", host + "/headers", nil)
-			if err != nil {
-				log.Printf("Error sending request to API endpoint. %+v", err)
-				return
-			}
-			req.Host = host
-			req.Header.Set("Host", host)
-			resp, err := pipeclient.Do(req)
-			if err != nil {
-				log.Printf("Error sending request to API endpoint. %+v", err)
-				return
-			}
-			log.Printf("%+v\n", resp)
-			_ = resp
-		}(&swg)
-	}
-
-	swg.Wait()
-
-}
-```
-
-```
-go run client.go
-```
-
+rawhttp internally uses [fastdialer](https://github.com/projectdiscovery/fastdialer) to dial connections and fastdialer has a disk cache for DNS lookups. While using rawhttp `.Close()` method should be called at end of the program to remove temporary files created by fastdialer.
 
 # License
 
