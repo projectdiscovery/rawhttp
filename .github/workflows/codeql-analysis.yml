@@ -3,8 +3,6 @@ name: 🚨 CodeQL Analysis
 on:
   workflow_dispatch:
   pull_request:
-    branches:
-      - master
 
 jobs:
   analyze:
