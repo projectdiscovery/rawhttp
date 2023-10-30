@@ -4,9 +4,9 @@ go 1.18
 
 require (
 	github.com/julienschmidt/httprouter v1.3.0
-	github.com/projectdiscovery/fastdialer v0.0.40
+	github.com/projectdiscovery/fastdialer v0.0.41
 	github.com/projectdiscovery/gologger v1.1.11
-	github.com/projectdiscovery/retryablehttp-go v1.0.31
+	github.com/projectdiscovery/retryablehttp-go v1.0.33
 	github.com/projectdiscovery/stringsutil v0.0.2
 	github.com/projectdiscovery/utils v0.0.58
 	github.com/remeh/sizedwaitgroup v1.0.0
@@ -40,9 +40,9 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
-	github.com/projectdiscovery/hmap v0.0.22 // indirect
+	github.com/projectdiscovery/hmap v0.0.23 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.6 // indirect
-	github.com/projectdiscovery/retryabledns v1.0.39 // indirect
+	github.com/projectdiscovery/retryabledns v1.0.40 // indirect
 	github.com/quic-go/quic-go v0.37.4 // indirect
 	github.com/refraction-networking/utls v1.5.4 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
