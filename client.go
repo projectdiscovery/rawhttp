@@ -37,6 +37,9 @@ func NewClient(options *Options) *Client {
 	}
 	if options.FastDialer == nil {
 		var err error
+		opts := fastdialer.DefaultOptions
+		opts.DialerTimeout = options.Timeout
+		options.FastDialer, err = fastdialer.NewDialer(opts)
 		options.FastDialer, err = fastdialer.NewDialer(fastdialer.DefaultOptions)
 		if err != nil {
 			gologger.Error().Msgf("Could not create fast dialer: %s\n", err)
