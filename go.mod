@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/julienschmidt/httprouter v1.3.0
-	github.com/projectdiscovery/fastdialer v0.0.52
+	github.com/projectdiscovery/fastdialer v0.0.53
 	github.com/projectdiscovery/gologger v1.1.12
 	github.com/projectdiscovery/retryablehttp-go v1.0.42
 	github.com/projectdiscovery/stringsutil v0.0.2
@@ -20,7 +20,7 @@ require (
 	github.com/andybalholm/brotli v1.0.6 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/cloudflare/circl v1.3.3 // indirect
+	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
@@ -44,7 +44,7 @@ require (
 	github.com/projectdiscovery/hmap v0.0.33 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.7 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.50 // indirect
-	github.com/quic-go/quic-go v0.37.4 // indirect
+	github.com/quic-go/quic-go v0.37.7 // indirect
 	github.com/refraction-networking/utls v1.5.4 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
