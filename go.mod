@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/julienschmidt/httprouter v1.3.0
-	github.com/projectdiscovery/fastdialer v0.0.53
+	github.com/projectdiscovery/fastdialer v0.0.55
 	github.com/projectdiscovery/gologger v1.1.12
 	github.com/projectdiscovery/retryablehttp-go v1.0.43
 	github.com/projectdiscovery/stringsutil v0.0.2
@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	github.com/Mzack9999/gcache v0.0.0-20230410081825-519e28eab057 // indirect
 	github.com/Mzack9999/go-http-digest-auth-client v0.6.1-0.20220414142836-eb8883508809 // indirect
 	github.com/akrylysov/pogreb v0.10.1 // indirect
 	github.com/andybalholm/brotli v1.0.6 // indirect
@@ -23,6 +24,7 @@ require (
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
+	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
 	github.com/gaukas/godicttls v0.0.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
