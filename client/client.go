@@ -18,7 +18,10 @@ type Version struct {
 }
 
 func (v *Version) String() string {
-	return fmt.Sprintf("HTTP/%d.%d", v.Major, v.Minor)
+	if v.Major < 2 {
+		return fmt.Sprintf("HTTP/%d.%d", v.Major, v.Minor)
+	}
+	return fmt.Sprintf("HTTP/%d", v.Major)
 }
 
 var (
