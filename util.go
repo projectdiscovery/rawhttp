@@ -44,6 +44,9 @@ func toRequest(method string, path string, query []string, headers map[string][]
 		Body:    body,
 	}
 }
+
+const MaxResponseReadSizeDecompress = 10 * 1024 * 1024
+
 func toHTTPResponse(conn Conn, resp *client.Response) (*http.Response, error) {
 	rheaders := fromHeaders(resp.Headers)
 	r := http.Response{
@@ -62,6 +65,8 @@ func toHTTPResponse(conn Conn, resp *client.Response) (*http.Response, error) {
 		if err != nil {
 			return nil, err
 		}
+		limitReader := io.LimitReader(rbody, MaxResponseReadSizeDecompress)
+		rbody = limitReader
 	}
 	rc := &readCloser{rbody, conn}
 
