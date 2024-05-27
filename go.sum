@@ -124,8 +124,8 @@ github.com/projectdiscovery/fastdialer v0.0.72 h1:CbKNFqvJotGmn9uBeHoR2vJQRg8QMu
 github.com/projectdiscovery/fastdialer v0.0.72/go.mod h1:sfeBKELnLnkpwEYcK5Qf8DRXLcdmR34u4TxtFwxNNQ0=
 github.com/projectdiscovery/gologger v1.1.12 h1:uX/QkQdip4PubJjjG0+uk5DtyAi1ANPJUvpmimXqv4A=
 github.com/projectdiscovery/gologger v1.1.12/go.mod h1:DI8nywPLERS5mo8QEA9E7gd5HZ3Je14SjJBH3F5/kLw=
-github.com/projectdiscovery/hmap v0.0.43 h1:9A/lGm/0uP9x2hP90dmK5vkc6KfGD0XYxDBAQ7lx/zg=
-github.com/projectdiscovery/hmap v0.0.43/go.mod h1:cMLXGlkLcPK0Y/aJVa+IZM9wdtkQ6HX4mHTXVC05Jbc=
+github.com/projectdiscovery/hmap v0.0.44 h1:bFUmPltPPZH+oGDnbYLEXNujZe+0j81c1E+gF1MMLXQ=
+github.com/projectdiscovery/hmap v0.0.44/go.mod h1:glLxv5kLMj/Rgn6iZ9JiSzs72t8FQ4hA34zVoFwFhuM=
 github.com/projectdiscovery/networkpolicy v0.0.8 h1:XvfBaBwSDNTesSfNQP9VLk3HX9I7x7gHm028TJ5XwI8=
 github.com/projectdiscovery/networkpolicy v0.0.8/go.mod h1:xnjNqhemxUPxU+UD5Jgsc3+K8IVmcqT1SJeo6UzMtkI=
 github.com/projectdiscovery/retryabledns v1.0.60 h1:f3TPeLnaJKrl9CbfsTfFTFnJY+UnyArH3mxxUUyR5ZQ=
