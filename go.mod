@@ -8,7 +8,7 @@ require (
 	github.com/projectdiscovery/gologger v1.1.15
 	github.com/projectdiscovery/retryablehttp-go v1.0.69
 	github.com/projectdiscovery/stringsutil v0.0.2
-	github.com/projectdiscovery/utils v0.2.0
+	github.com/projectdiscovery/utils v0.2.1
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/net v0.23.0
@@ -45,7 +45,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
-	github.com/projectdiscovery/hmap v0.0.50 // indirect
+	github.com/projectdiscovery/hmap v0.0.51 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.9 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.67 // indirect
 	github.com/refraction-networking/utls v1.6.7 // indirect
