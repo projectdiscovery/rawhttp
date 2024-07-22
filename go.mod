@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/julienschmidt/httprouter v1.3.0
-	github.com/projectdiscovery/fastdialer v0.2.0
+	github.com/projectdiscovery/fastdialer v0.2.1
 	github.com/projectdiscovery/gologger v1.1.15
 	github.com/projectdiscovery/retryablehttp-go v1.0.70
 	github.com/projectdiscovery/stringsutil v0.0.2
