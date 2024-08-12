@@ -114,8 +114,8 @@ github.com/projectdiscovery/blackrock v0.0.1 h1:lHQqhaaEFjgf5WkuItbpeCZv2DUIE45k
 github.com/projectdiscovery/blackrock v0.0.1/go.mod h1:ANUtjDfaVrqB453bzToU+YB4cUbvBRpLvEwoWIwlTss=
 github.com/projectdiscovery/fastdialer v0.2.3 h1:K03x5XEXGyVWxS2rtSR104E9kHF0aphN7kOCzbh8zv0=
 github.com/projectdiscovery/fastdialer v0.2.3/go.mod h1:a0BKvETrO1EAohUYp9gwtbbce0hKD1qGrTegyAUqyRo=
-github.com/projectdiscovery/gologger v1.1.17 h1:4KWUgXGKLzXqyDAl9A+fiCcgGgHa4zo7++166xDRSqo=
-github.com/projectdiscovery/gologger v1.1.17/go.mod h1:JAo10tJopMAUHDdKTX/ZSb1QC/sgxfr5ovrd+SAt7fM=
+github.com/projectdiscovery/gologger v1.1.18 h1:fux2S/LXYe18/w4PylAFpEFg+EApNCuyS85x25nDE98=
+github.com/projectdiscovery/gologger v1.1.18/go.mod h1:IgjKgVLfVGUovxlC6WJcXK0qvo/tNZ1P0+r6miQqyRk=
 github.com/projectdiscovery/hmap v0.0.54 h1:b3pdQZwCw4is3xiL2jBx7SJZcYaf/7vtozY7bjUzO/s=
 github.com/projectdiscovery/hmap v0.0.54/go.mod h1:j0oakxYOWEfk29wRq5gQgrCv1JnfAfzGaMsRWwEas80=
 github.com/projectdiscovery/networkpolicy v0.0.9 h1:IrlDoYZagNNO8y+7iZeHT8k5izE+nek7TdtvEBwCxqk=
@@ -126,8 +126,8 @@ github.com/projectdiscovery/retryablehttp-go v1.0.73 h1:RGckoCYNYrPbNtJRs7wy6vTF
 github.com/projectdiscovery/retryablehttp-go v1.0.73/go.mod h1:6ymJWVoTY05eB2nE/EqUcXgyFaZcBVPokUVLHz5JXi8=
 github.com/projectdiscovery/stringsutil v0.0.2 h1:uzmw3IVLJSMW1kEg8eCStG/cGbYYZAja8BH3LqqJXMA=
 github.com/projectdiscovery/stringsutil v0.0.2/go.mod h1:EJ3w6bC5fBYjVou6ryzodQq37D5c6qbAYQpGmAy+DC0=
-github.com/projectdiscovery/utils v0.2.4 h1:CHnlt2la4jr8TeL7ZK7UhQItHY7DDXqIuLnnxyAJLDY=
-github.com/projectdiscovery/utils v0.2.4/go.mod h1:2Vx7geSrBfCPqknZywqbChQm8SE30mcyrlB5YsxEnhA=
+github.com/projectdiscovery/utils v0.2.5 h1:puiw3/gK1WTEj9ZKnW00tAS0ex+ETqbLJ8juRuejA98=
+github.com/projectdiscovery/utils v0.2.5/go.mod h1:fv3WC6m/+bVT+wH+fMB+JsKviEC/UAuDSeKxWPlK3kk=
 github.com/refraction-networking/utls v1.6.7 h1:zVJ7sP1dJx/WtVuITug3qYUq034cDq9B2MR1K67ULZM=
 github.com/refraction-networking/utls v1.6.7/go.mod h1:BC3O4vQzye5hqpmDTWUqi4P5DDhzJfkV1tdqtawQIH0=
 github.com/remeh/sizedwaitgroup v1.0.0 h1:VNGGFwNo/R5+MJBf6yrsr110p0m4/OX4S3DCy7Kyl5E=
