@@ -120,8 +120,8 @@ github.com/projectdiscovery/hmap v0.0.57 h1:n45T9Me/fL0fqdVZ+Pi/eVizBguNRCleThqx
 github.com/projectdiscovery/hmap v0.0.57/go.mod h1:aa7egkpPIBukf5tis936KSddiXfEvWUKYLzrtV3CH8M=
 github.com/projectdiscovery/networkpolicy v0.0.9 h1:IrlDoYZagNNO8y+7iZeHT8k5izE+nek7TdtvEBwCxqk=
 github.com/projectdiscovery/networkpolicy v0.0.9/go.mod h1:XFJ2Lnv8BE/ziQCFjBHMsH1w6VmkPiQtk+NlBpdMU7M=
-github.com/projectdiscovery/retryabledns v1.0.73 h1:CLqtgoI6+YVcUE2jnZPFVvwj59CHDE4HNImLf62sSuw=
-github.com/projectdiscovery/retryabledns v1.0.73/go.mod h1:Wo5tQHKtx6XcYYhMypRg8dr0GGnqIb4CzoTSEw2lo7I=
+github.com/projectdiscovery/retryabledns v1.0.74 h1:4NtSjnVdPWT1NuabOMf5vjUoky3X1DwJN6iFanrtQnk=
+github.com/projectdiscovery/retryabledns v1.0.74/go.mod h1:GRBpKmWIds0UVeDpqSek2Q8RITuuIZWD5wHL4cN5geg=
 github.com/projectdiscovery/retryablehttp-go v1.0.76 h1:2+4QpWnXUZFBkoeCEBXtUjSeBTdgKtaGwP8LRtKAC3g=
 github.com/projectdiscovery/retryablehttp-go v1.0.76/go.mod h1:0qIv7Ld8WWSKWYXMsNAWRYU5gsxnxpBza3SjDgt6nVc=
 github.com/projectdiscovery/stringsutil v0.0.2 h1:uzmw3IVLJSMW1kEg8eCStG/cGbYYZAja8BH3LqqJXMA=
