@@ -5,10 +5,10 @@ go 1.21
 require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/projectdiscovery/fastdialer v0.2.9
-	github.com/projectdiscovery/gologger v1.1.25
-	github.com/projectdiscovery/retryablehttp-go v1.0.79
+	github.com/projectdiscovery/gologger v1.1.26
+	github.com/projectdiscovery/retryablehttp-go v1.0.80
 	github.com/projectdiscovery/stringsutil v0.0.2
-	github.com/projectdiscovery/utils v0.2.11
+	github.com/projectdiscovery/utils v0.2.13
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/net v0.29.0
@@ -45,9 +45,9 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
-	github.com/projectdiscovery/hmap v0.0.60 // indirect
+	github.com/projectdiscovery/hmap v0.0.61 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.9 // indirect
-	github.com/projectdiscovery/retryabledns v1.0.77 // indirect
+	github.com/projectdiscovery/retryabledns v1.0.78 // indirect
 	github.com/refraction-networking/utls v1.6.7 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
