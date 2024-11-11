@@ -6,7 +6,7 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/projectdiscovery/fastdialer v0.2.9
 	github.com/projectdiscovery/gologger v1.1.31
-	github.com/projectdiscovery/retryablehttp-go v1.0.85
+	github.com/projectdiscovery/retryablehttp-go v1.0.86
 	github.com/projectdiscovery/stringsutil v0.0.2
 	github.com/projectdiscovery/utils v0.2.18
 	github.com/remeh/sizedwaitgroup v1.0.0
