@@ -124,12 +124,30 @@ func (c *client) WriteRequest(req *Request) error {
 	return c.WriteBody(req.Body)
 }
 
+// isStatusLine reports whether line looks like an HTTP status line
+// (e.g. "HTTP/1.0 200 OK"). It is used to skip duplicate status lines
+// emitted by some non-compliant servers.
+func isStatusLine(line []byte) bool {
+	return len(line) >= 5 && string(line[:5]) == "HTTP/"
+}
+
 // ReadResponse unmarshalls a HTTP response.
 func (c *client) ReadResponse(forceReadAll bool) (*Response, error) {
 	version, code, msg, err := c.ReadStatusLine()
 	var headers []Header
 	if err != nil {
 		return nil, fmt.Errorf("ReadStatusLine: %v", err)
+	}
+	// Some non-compliant servers (e.g. certain embedded devices) repeat the
+	// status line one or more times before the actual headers. Skip any such
+	// duplicate status lines so that header parsing succeeds.
+	for {
+		peeked, peekErr := c.Peek(5)
+		if peekErr != nil || !isStatusLine(peeked) {
+			break
+		}
+		// Discard the entire duplicate status line (read until newline).
+		_, _ = c.ReadBytes('\n')
 	}
 	for {
 		var key, value string

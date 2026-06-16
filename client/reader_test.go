@@ -2,6 +2,7 @@ package client
 
 import (
 	"bufio"
+	"io"
 	"strings"
 	"testing"
 
@@ -64,4 +65,31 @@ func TestReadVersion(t *testing.T) {
 			require.Equal(t, test.minor, result.Minor)
 		})
 	}
+}
+
+// readWriterStub wraps a strings.Reader to satisfy io.ReadWriter (writes are no-ops).
+type readWriterStub struct{ *strings.Reader }
+
+func (readWriterStub) Write(p []byte) (int, error) { return len(p), nil }
+
+func TestReadResponseDuplicateStatusLines(t *testing.T) {
+	// Some non-compliant embedded devices (e.g. Grandstream HT801) emit the
+	// HTTP status line twice before the headers. rawhttp must not error on this.
+	raw := "HTTP/1.0 200 OK\r\nHTTP/1.0 200 OK\r\nContent-Type: text/html\r\nContent-Length: 5\r\n\r\nhello"
+	c := NewClient(readWriterStub{strings.NewReader(raw)})
+	resp, err := c.ReadResponse(false)
+	require.NoError(t, err, "ReadResponse must not fail on duplicate status lines")
+	require.Equal(t, 200, resp.Status.Code)
+	body, _ := io.ReadAll(resp.Body)
+	require.Equal(t, "hello", string(body))
+}
+
+func TestReadResponseTripleStatusLines(t *testing.T) {
+	// Also handle three consecutive status lines.
+	raw := "HTTP/1.0 200 OK\r\nHTTP/1.0 200 OK\r\nHTTP/1.0 200 OK\r\nX-Custom: test\r\n\r\n"
+	c := NewClient(readWriterStub{strings.NewReader(raw)})
+	resp, err := c.ReadResponse(false)
+	require.NoError(t, err, "ReadResponse must not fail on triple status lines")
+	require.Equal(t, 200, resp.Status.Code)
+	require.Equal(t, "test", resp.Headers[0].Value)
 }
