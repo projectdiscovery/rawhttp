@@ -124,12 +124,37 @@ func (c *client) WriteRequest(req *Request) error {
 	return c.WriteBody(req.Body)
 }
 
+// maxDuplicateStatusLines bounds how many repeated status lines we are willing
+// to discard, so a misbehaving (or malicious) server streaming "HTTP/..." lines
+// indefinitely cannot keep us looping.
+const maxDuplicateStatusLines = 8
+
+// isStatusLine reports whether line looks like an HTTP status line
+// (e.g. "HTTP/1.0 200 OK"). It is used to skip duplicate status lines
+// emitted by some non-compliant servers.
+func isStatusLine(line []byte) bool {
+	return bytes.HasPrefix(line, []byte("HTTP/"))
+}
+
 // ReadResponse unmarshalls a HTTP response.
 func (c *client) ReadResponse(forceReadAll bool) (*Response, error) {
 	version, code, msg, err := c.ReadStatusLine()
 	var headers []Header
 	if err != nil {
 		return nil, fmt.Errorf("ReadStatusLine: %v", err)
+	}
+	// Some non-compliant servers (e.g. certain embedded devices) repeat the
+	// status line one or more times before the actual headers. Skip any such
+	// duplicate status lines so that header parsing succeeds.
+	for i := 0; i < maxDuplicateStatusLines; i++ {
+		peeked, peekErr := c.Peek(5)
+		if peekErr != nil || !isStatusLine(peeked) {
+			break
+		}
+		// Discard the entire duplicate status line (read until newline).
+		if _, err := c.ReadBytes('\n'); err != nil {
+			break
+		}
 	}
 	for {
 		var key, value string
