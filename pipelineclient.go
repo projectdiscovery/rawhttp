@@ -89,7 +89,7 @@ func (c *PipelineClient) do(method, url, uripath string, headers map[string][]st
 	if path == "" {
 		path = "/"
 	}
-	if len(u.Params) > 0 {
+	if !u.Params.IsEmpty() {
 		path += "?" + u.Params.Encode()
 	}
 	// override if custom one is specified

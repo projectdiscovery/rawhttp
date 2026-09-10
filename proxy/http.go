@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net"
@@ -8,10 +9,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/projectdiscovery/fastdialer/fastdialer"
 	"github.com/projectdiscovery/rawhttp/client"
 )
 
-func HTTPDialer(proxyAddr string, timeout time.Duration) DialFunc {
+func httpDialer(proxyAddr string, timeout time.Duration, fd *fastdialer.Dialer) DialFunc {
 	return func(addr string) (net.Conn, error) {
 		var netConn net.Conn
 		var err error
@@ -31,11 +33,12 @@ func HTTPDialer(proxyAddr string, timeout time.Duration) DialFunc {
 			auth = base64.StdEncoding.EncodeToString([]byte(split[0]))
 			proxyAddr = split[1]
 		}
-		if timeout == 0 {
-			netConn, err = net.Dial("tcp", u.Host)
+		if fd != nil {
+			netConn, err = fd.Dial(context.TODO(), "tcp", u.Host)
 		} else {
 			netConn, err = net.DialTimeout("tcp", u.Host, timeout)
 		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -62,4 +65,12 @@ func HTTPDialer(proxyAddr string, timeout time.Duration) DialFunc {
 
 		return netConn, nil
 	}
+}
+
+func HTTPDialer(proxyAddr string, timeout time.Duration) DialFunc {
+	return httpDialer(proxyAddr, timeout, nil)
+}
+
+func HTTPFastDialer(proxyAddr string, timeout time.Duration, fd *fastdialer.Dialer) DialFunc {
+	return httpDialer(proxyAddr, timeout, fd)
 }

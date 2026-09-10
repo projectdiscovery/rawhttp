@@ -8,6 +8,8 @@ import (
 
 	"net/http"
 
+	"github.com/projectdiscovery/fastdialer/fastdialer"
+	"github.com/projectdiscovery/gologger"
 	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
 	urlutil "github.com/projectdiscovery/utils/url"
 )
@@ -33,6 +35,15 @@ func NewClient(options *Options) *Client {
 	client := &Client{
 		dialer:  new(dialer),
 		Options: options,
+	}
+	if options.FastDialer == nil {
+		var err error
+		opts := fastdialer.DefaultOptions
+		opts.DialerTimeout = options.Timeout
+		options.FastDialer, err = fastdialer.NewDialer(opts)
+		if err != nil {
+			gologger.Error().Msgf("Could not create fast dialer: %s\n", err)
+		}
 	}
 	return client
 }
@@ -92,6 +103,13 @@ func (c *Client) DoRawWithOptions(method, url, uripath string, headers map[strin
 	return c.do(method, url, uripath, headers, body, redirectstatus, options)
 }
 
+// Close closes client and any resources it holds
+func (c *Client) Close() {
+	if c.Options.FastDialer != nil {
+		c.Options.FastDialer.Close()
+	}
+}
+
 func (c *Client) getConn(protocol, host string, options *Options) (Conn, error) {
 	if options.Proxy != "" {
 		return c.dialer.DialWithProxy(protocol, host, c.Options.Proxy, c.Options.ProxyDialTimeout, options)
@@ -139,7 +157,7 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 	if path == "" {
 		path = "/"
 	}
-	if len(u.Params) > 0 {
+	if !u.Params.IsEmpty() {
 		path += "?" + u.Params.Encode()
 	}
 	// override if custom one is specified
