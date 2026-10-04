@@ -183,15 +183,18 @@ func (c *Client) do(method, url, uripath string, headers map[string][]string, bo
 	}
 
 	if err := conn.WriteRequest(req); err != nil {
+		_ = conn.Close()
 		return nil, err
 	}
 	resp, err := conn.ReadResponse(options.ForceReadAllBody)
 	if err != nil {
+		_ = conn.Close()
 		return nil, err
 	}
 
 	r, err := toHTTPResponse(conn, resp)
 	if err != nil {
+		_ = conn.Close()
 		return nil, err
 	}
 
