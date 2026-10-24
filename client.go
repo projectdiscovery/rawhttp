@@ -3,9 +3,10 @@ package rawhttp
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 	"time"
+
+	"net/http"
 
 	"github.com/projectdiscovery/fastdialer/fastdialer"
 	"github.com/projectdiscovery/gologger"
