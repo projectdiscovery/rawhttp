@@ -21,7 +21,7 @@ func httpDialer(proxyAddr string, timeout time.Duration, fd *fastdialer.Dialer) 
 		// close the connection when an error occurs
 		defer func() {
 			if err != nil && netConn != nil {
-				netConn.Close()
+				_ = netConn.Close()
 			}
 		}()
 		u, err := url.Parse(proxyAddr)
