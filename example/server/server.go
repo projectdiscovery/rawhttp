@@ -8,9 +8,10 @@ import (
 )
 
 func headers(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	for name, headers := range req.Header {
 		for _, h := range headers {
-			fmt.Fprintf(w, "%v: %v\n", name, h)
+			_, _ = fmt.Fprintf(w, "%v: %v\n", name, h)
 		}
 	}
 }

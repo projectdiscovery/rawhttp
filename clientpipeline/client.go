@@ -104,12 +104,12 @@ func tlsClientHandshake(rawConn net.Conn, tlsConfig *tls.Config, timeout time.Du
 
 	select {
 	case <-tc.C:
-		rawConn.Close()
-		<-ch
+		_ = rawConn.Close()
+		<-ch //nolint:errcheck // drain the goroutine result before reuse
 		return nil, ErrTLSHandshakeTimeout
 	case err := <-ch:
 		if err != nil {
-			rawConn.Close()
+			_ = rawConn.Close()
 			return nil, err
 		}
 		return conn, nil
@@ -369,13 +369,13 @@ func (c *pipelineConnClient) worker() error {
 	// Wait until reader and writer are stopped
 	select {
 	case err = <-doneW:
-		conn.Close()
+		_ = conn.Close()
 		close(stopR)
-		<-doneR
+		<-doneR //nolint:errcheck // drain the goroutine result before reuse
 	case err = <-doneR:
-		conn.Close()
+		_ = conn.Close()
 		close(stopW)
-		<-doneW
+		<-doneW //nolint:errcheck // drain the goroutine result before reuse
 	}
 
 	// Notify pending readers
@@ -410,7 +410,7 @@ func (c *pipelineConnClient) writer(conn net.Conn, stopCh <-chan struct{}) error
 		writeBufferSize = defaultWriteBufferSize
 	}
 	bw := bufio.NewWriterSize(conn, writeBufferSize)
-	defer bw.Flush()
+	defer func() { _ = bw.Flush() }()
 	chR := c.chR
 	chW := c.chW
 	writeTimeout := c.WriteTimeout

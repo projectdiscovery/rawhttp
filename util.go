@@ -151,19 +151,19 @@ func DumpRequestRaw(method, url, uripath string, headers map[string][]string, bo
 		q = "?" + q
 	}
 
-	b.WriteString(fmt.Sprintf("%s %s%s %s"+client.NewLine, req.Method, req.Path, q, req.Version.String()))
+	_, _ = fmt.Fprintf(&b, "%s %s%s %s"+client.NewLine, req.Method, req.Path, q, req.Version.String())
 
 	for _, header := range req.Headers {
 		if header.Value != "" {
-			b.WriteString(fmt.Sprintf("%s: %s"+client.NewLine, header.Key, header.Value))
+			_, _ = fmt.Fprintf(&b, "%s: %s"+client.NewLine, header.Key, header.Value)
 		} else {
-			b.WriteString(fmt.Sprintf("%s"+client.NewLine, header.Key))
+			_, _ = fmt.Fprintf(&b, "%s"+client.NewLine, header.Key)
 		}
 	}
 
 	l := req.ContentLength()
 	if req.AutomaticContentLength && l >= 0 {
-		b.WriteString(fmt.Sprintf("Content-Length: %d"+client.NewLine, l))
+		_, _ = fmt.Fprintf(&b, "Content-Length: %d"+client.NewLine, l)
 	}
 
 	b.WriteString(client.NewLine)
