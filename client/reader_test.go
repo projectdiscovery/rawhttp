@@ -93,3 +93,47 @@ func TestReadResponseTripleStatusLines(t *testing.T) {
 	require.Equal(t, 200, resp.Status.Code)
 	require.Equal(t, "test", resp.Headers[0].Value)
 }
+
+// TestReadResponseBodyless reads keep-alive responses back to back from one
+// stream. A response that cannot carry a body must read none, so the next
+// response starts at its status line.
+func TestReadResponseBodyless(t *testing.T) {
+	tests := []struct {
+		name   string
+		req    *Request
+		raw    string
+		code   int
+		length int64
+	}{
+		{name: "204 without length", req: &Request{Method: "GET", Body: strings.NewReader("")}, raw: "HTTP/1.1 204 No Content\r\n\r\n", code: 204, length: -1},
+		{name: "304 with length", req: &Request{Method: "GET", Body: strings.NewReader("")}, raw: "HTTP/1.1 304 Not Modified\r\nContent-Length: 42\r\n\r\n", code: 304, length: 42},
+		{name: "1xx", req: &Request{Method: "GET", Body: strings.NewReader("")}, raw: "HTTP/1.1 102 Processing\r\nContent-Length: 3\r\n\r\n", code: 102, length: 3},
+		{name: "HEAD with length", req: &Request{Method: "HEAD", Body: strings.NewReader("")}, raw: "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\n", code: 200, length: 5},
+		{name: "raw HEAD with length", req: &Request{RawBytes: []byte("HEAD / HTTP/1.1\r\n\r\n")}, raw: "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\n", code: 200, length: 5},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// requests carry an empty body: the writer only returns to the
+			// request line phase after a body is written
+			next := "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhello"
+			c := NewClient(readWriterStub{strings.NewReader(tt.raw + next)})
+
+			require.NoError(t, c.WriteRequest(tt.req))
+			resp, err := c.ReadResponse(false)
+			require.NoError(t, err)
+			require.Equal(t, tt.code, resp.Status.Code)
+			require.Equal(t, tt.length, resp.ContentLength(), "the reported Content-Length must be kept")
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Empty(t, string(body))
+
+			require.NoError(t, c.WriteRequest(&Request{Method: "GET", Body: strings.NewReader("")}))
+			resp, err = c.ReadResponse(false)
+			require.NoError(t, err)
+			require.Equal(t, 200, resp.Status.Code)
+			body, err = io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, "hello", string(body))
+		})
+	}
+}

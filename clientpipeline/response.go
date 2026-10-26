@@ -6,9 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/http/httputil"
 	"strconv"
 	"strings"
+
+	"github.com/projectdiscovery/rawhttp/client"
 )
 
 // Response represents an RFC2616 response.
@@ -65,7 +68,16 @@ type Status struct {
 	Reason string
 }
 
+// Read reads a response from r. It cannot tell a response to HEAD from
+// others, so prefer ReadWithMethod when the request method is known.
 func (resp *Response) Read(r *bufio.Reader) error {
+	return resp.ReadWithMethod(r, "")
+}
+
+// ReadWithMethod reads the response to a request with method from r. A
+// response that cannot carry a body (RFC 9112 section 6.3) gets an empty
+// Body and leaves r at the start of the next response.
+func (resp *Response) ReadWithMethod(r *bufio.Reader, method string) error {
 	version, code, msg, err := resp.ReadStatusLine(r)
 	var headers []Header
 	if err != nil {
@@ -89,6 +101,12 @@ func (resp *Response) Read(r *bufio.Reader) error {
 	resp.Version = version
 	resp.Status = Status{Code: code, Reason: msg}
 	resp.Headers = headers
+	if client.IsBodyless(method, code) {
+		// keep the reported Content-Length header, but read no body
+		resp.body = nil
+		resp.Body = http.NoBody
+		return nil
+	}
 	resp.Body = resp.ReadBody(r)
 
 	if l := resp.ContentLength(); l >= 0 {
@@ -219,6 +237,10 @@ func (resp *Response) ReadHeader(r *bufio.Reader) (string, string, bool, error) 
 }
 
 func (resp *Response) ReadBody(r *bufio.Reader) io.Reader {
+	if client.IsBodyless("", resp.Status.Code) {
+		resp.body = nil
+		return http.NoBody
+	}
 	l := resp.ContentLength()
 	if l > 0 {
 		resp.body = make([]byte, l)
