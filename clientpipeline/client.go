@@ -545,7 +545,7 @@ func (c *pipelineConnClient) reader(conn net.Conn, stopCh <-chan struct{}) error
 				return err
 			}
 		}
-		if err = w.resp.Read(br); err != nil {
+		if err = w.resp.ReadWithMethod(br, w.req.Method); err != nil {
 			w.err = err
 			w.done <- struct{}{}
 			return err
