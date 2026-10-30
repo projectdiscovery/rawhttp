@@ -144,22 +144,24 @@ func (c *client) ReadResponse(forceReadAll bool) (*Response, error) {
 		return nil, fmt.Errorf("ReadStatusLine: %v", err)
 	}
 	// Some non-compliant servers (e.g. certain embedded devices) repeat the
-	// status line one or more times before the actual headers. Skip any such
-	// duplicate status lines so that header parsing succeeds.
-	for i := 0; i < maxDuplicateStatusLines; i++ {
-		peeked, peekErr := c.Peek(5)
-		if peekErr != nil || !isStatusLine(peeked) {
-			break
-		}
-		// Discard the entire duplicate status line (read until newline).
-		if _, err := c.ReadBytes('\n'); err != nil {
-			break
-		}
-	}
+	// status line one or more times before the actual headers. Read the
+	// header section line by line and skip any such duplicate status lines.
+	// Peeking ahead is avoided: a response without headers has no more bytes
+	// after the status line, and Peek would block waiting for them.
+	skippedStatusLines := 0
 	for {
+		line, readErr := c.readLine()
+		if readErr != nil {
+			err = readErr
+			break
+		}
+		if len(headers) == 0 && isStatusLine(line) && skippedStatusLines < maxDuplicateStatusLines {
+			skippedStatusLines++
+			continue
+		}
 		var key, value string
 		var done bool
-		key, value, done, err = c.ReadHeader()
+		key, value, done, err = parseHeaderLine(line)
 		if err != nil || done {
 			break
 		}
