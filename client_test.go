@@ -150,3 +150,26 @@ func TestResponseBodyOwnsConnection(t *testing.T) {
 		t.Errorf("Close called %d times, want 1", conn.closeCalls)
 	}
 }
+
+// A response without a body has no gzip stream to decode, even when it
+// reports a gzip Content-Encoding, as a HEAD response does.
+func TestBodylessGzipResponse(t *testing.T) {
+	conn := &cleanupConn{response: &rawclient.Response{
+		Version: rawclient.HTTP_1_1,
+		Status:  rawclient.Status{Code: http.StatusOK, Reason: "OK"},
+		Headers: []rawclient.Header{{Key: "Content-Encoding", Value: "gzip"}, {Key: "Content-Length", Value: "20"}},
+		Body:    http.NoBody,
+	}}
+	c := &Client{dialer: &cleanupDialer{conn: conn}, Options: &Options{}}
+	resp, err := c.DoRaw("HEAD", "http://example.com/", "", nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil || len(body) != 0 {
+		t.Fatalf("body = %q, error = %v, want empty", body, err)
+	}
+	if resp.ContentLength != 20 {
+		t.Errorf("ContentLength = %d, want the reported 20", resp.ContentLength)
+	}
+}

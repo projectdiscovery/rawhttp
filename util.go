@@ -60,7 +60,8 @@ func toHTTPResponse(conn Conn, resp *client.Response) (*http.Response, error) {
 
 	var err error
 	rbody := resp.Body
-	if headerValue(rheaders, "Content-Encoding") == "gzip" {
+	// an empty body is not a gzip stream, so do not wrap one
+	if rbody != http.NoBody && headerValue(rheaders, "Content-Encoding") == "gzip" {
 		rbody, err = gzip.NewReader(rbody)
 		if err != nil {
 			return nil, err
