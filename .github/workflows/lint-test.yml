@@ -14,9 +14,14 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+      # Package loading downloads and type-checks every dependency. On a
+      # cold runner that can exceed the lint timeout, so warm the module
+      # cache first and allow more time.
+      - name: Download modules
+        run: go mod download
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
           version: latest
-          args: --timeout 5m
+          args: --timeout 10m
           working-directory: .
