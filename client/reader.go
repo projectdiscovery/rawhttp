@@ -117,7 +117,13 @@ func (r *reader) ReadHeader() (string, string, bool, error) {
 	if err != nil {
 		return "", "", false, err
 	}
-	if line := string(line); line == "\r\n" || line == "\n" {
+	return parseHeaderLine(line)
+}
+
+// parseHeaderLine parses a single header line. done reports whether the line
+// is the blank line that ends the header section.
+func parseHeaderLine(line []byte) (key, value string, done bool, err error) {
+	if string(line) == "\r\n" || string(line) == "\n" {
 		return "", "", true, nil
 	}
 	v := bytes.SplitN(line, []byte(":"), 2)
