@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/textproto"
 	"strings"
 
 	"github.com/projectdiscovery/rawhttp/client"
@@ -91,7 +92,8 @@ func fromHeaders(h []client.Header) map[string][]string {
 	}
 	var r = make(map[string][]string)
 	for _, hh := range h {
-		r[hh.Key] = append(r[hh.Key], hh.Value)
+		k := textproto.CanonicalMIMEHeaderKey(hh.Key)
+		r[k] = append(r[k], hh.Value)
 	}
 	return r
 }
