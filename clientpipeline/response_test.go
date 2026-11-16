@@ -134,3 +134,42 @@ func TestPipelineHeadResponse(t *testing.T) {
 		{method: "GET", path: "/get", raw: "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhello", code: 200, body: "hello", length: 5},
 	})
 }
+
+// Interim 1xx responses before the final response belong to the same request:
+// the client skips them and returns the final response with its body.
+func TestPipelineInterimThenFinal(t *testing.T) {
+	for _, status := range []string{"100 Continue", "103 Early Hints"} {
+		t.Run(status, func(t *testing.T) {
+			runPipelined(t, []pipelinedExchange{{
+				method: "GET", path: "/interim",
+				raw: "HTTP/1.1 " + status + "\r\nLink: </a.css>; rel=preload\r\n\r\n" +
+					"HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nfinal",
+				code: 200, body: "final", length: 5,
+			}})
+		})
+	}
+	t.Run("two interim then next request", func(t *testing.T) {
+		runPipelined(t, []pipelinedExchange{
+			{method: "GET", path: "/a", raw: "HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 103 Early Hints\r\n\r\nHTTP/1.1 200 OK\r\nContent-Length: 1\r\n\r\na", code: 200, body: "a", length: 1},
+			{method: "GET", path: "/b", raw: "HTTP/1.1 200 OK\r\nContent-Length: 1\r\n\r\nb", code: 200, body: "b", length: 1},
+		})
+	})
+}
+
+// 101 Switching Protocols is final: the reader returns it and does not read on.
+func TestPipelineSwitchingProtocolsIsFinal(t *testing.T) {
+	runPipelined(t, []pipelinedExchange{{
+		method: "GET", path: "/ws",
+		raw:  "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n",
+		code: 101, body: "", length: -1,
+	}})
+}
+
+// A server that sends interim responses without end is refused.
+func TestReadTooManyInterimResponses(t *testing.T) {
+	raw := strings.Repeat("HTTP/1.1 103 Early Hints\r\n\r\n", maxInterimResponses+1) + "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
+	var resp Response
+	if err := resp.ReadWithMethod(bufio.NewReader(strings.NewReader(raw)), "GET"); err == nil {
+		t.Fatalf("read %d interim responses without error, status %d", maxInterimResponses+1, resp.Status.Code)
+	}
+}
