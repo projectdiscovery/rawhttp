@@ -107,7 +107,7 @@ func TestReadResponseBodyless(t *testing.T) {
 	}{
 		{name: "204 without length", req: &Request{Method: "GET", Body: strings.NewReader("")}, raw: "HTTP/1.1 204 No Content\r\n\r\n", code: 204, length: -1},
 		{name: "304 with length", req: &Request{Method: "GET", Body: strings.NewReader("")}, raw: "HTTP/1.1 304 Not Modified\r\nContent-Length: 42\r\n\r\n", code: 304, length: 42},
-		{name: "1xx", req: &Request{Method: "GET", Body: strings.NewReader("")}, raw: "HTTP/1.1 102 Processing\r\nContent-Length: 3\r\n\r\n", code: 102, length: 3},
+		{name: "101 is final", req: &Request{Method: "GET", Body: strings.NewReader("")}, raw: "HTTP/1.1 101 Switching Protocols\r\nContent-Length: 3\r\n\r\n", code: 101, length: 3},
 		{name: "HEAD with length", req: &Request{Method: "HEAD", Body: strings.NewReader("")}, raw: "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\n", code: 200, length: 5},
 		{name: "raw HEAD with length", req: &Request{RawBytes: []byte("HEAD / HTTP/1.1\r\n\r\n")}, raw: "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\n", code: 200, length: 5},
 	}
@@ -136,4 +136,33 @@ func TestReadResponseBodyless(t *testing.T) {
 			require.Equal(t, "hello", string(body))
 		})
 	}
+}
+
+// TestReadResponseSkipsInterim returns the final response that follows 1xx
+// interim responses.
+func TestReadResponseSkipsInterim(t *testing.T) {
+	for _, forceReadAll := range []bool{false, true} {
+		raw := "HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok"
+		c := NewClient(readWriterStub{strings.NewReader(raw)})
+		resp, err := c.ReadResponse(forceReadAll)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.Status.Code)
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, "ok", string(body))
+	}
+}
+
+func TestReadResponseInterimLimit(t *testing.T) {
+	final := "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok"
+	interim := "HTTP/1.1 103 Early Hints\r\nLink: </a.css>\r\n\r\n"
+
+	c := NewClient(readWriterStub{strings.NewReader(strings.Repeat(interim, MaxInterimResponses) + final)})
+	resp, err := c.ReadResponse(false)
+	require.NoError(t, err, "the maximum number of interim responses is allowed")
+	require.Equal(t, 200, resp.Status.Code)
+
+	c = NewClient(readWriterStub{strings.NewReader(strings.Repeat(interim, MaxInterimResponses+1) + final)})
+	_, err = c.ReadResponse(false)
+	require.Error(t, err, "more than the maximum interim responses must fail")
 }

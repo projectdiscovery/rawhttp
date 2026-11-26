@@ -76,7 +76,7 @@ func (resp *Response) Read(r *bufio.Reader) error {
 
 // maxInterimResponses bounds the 1xx responses read before a final response,
 // as net/http does, so a server cannot keep the reader looping.
-const maxInterimResponses = 5
+const maxInterimResponses = client.MaxInterimResponses
 
 // ReadWithMethod reads the response to a request with method from r. A
 // response that cannot carry a body (RFC 9112 section 6.3) gets an empty
@@ -88,8 +88,7 @@ func (resp *Response) ReadWithMethod(r *bufio.Reader, method string) error {
 		if err := resp.readWithMethod(r, method); err != nil {
 			return err
 		}
-		code := resp.Status.Code
-		if code < 100 || code >= 200 || code == http.StatusSwitchingProtocols {
+		if !client.IsInterim(resp.Status.Code) {
 			return nil
 		}
 		if interim == maxInterimResponses {

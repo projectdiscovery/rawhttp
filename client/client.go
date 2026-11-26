@@ -168,8 +168,32 @@ func isStatusLine(line []byte) bool {
 	return bytes.HasPrefix(line, []byte("HTTP/"))
 }
 
-// ReadResponse unmarshalls a HTTP response.
+// MaxInterimResponses bounds the 1xx responses read before a final response,
+// as net/http does, so a server cannot keep the reader looping.
+const MaxInterimResponses = 5
+
+// IsInterim reports whether code is an interim 1xx response that belongs to
+// the same request as the final response that follows. 101 Switching
+// Protocols is final: the connection changes protocol after it.
+func IsInterim(code int) bool {
+	return code >= 100 && code < 200 && code != http.StatusSwitchingProtocols
+}
+
+// ReadResponse unmarshalls a HTTP response. Interim 1xx responses other than
+// 101 are skipped and the final response is returned (RFC 9110 section 15.2).
 func (c *client) ReadResponse(forceReadAll bool) (*Response, error) {
+	for interim := 0; ; interim++ {
+		resp, err := c.readResponse(forceReadAll)
+		if err != nil || !IsInterim(resp.Status.Code) {
+			return resp, err
+		}
+		if interim == MaxInterimResponses {
+			return nil, errors.New("too many 1xx informational responses")
+		}
+	}
+}
+
+func (c *client) readResponse(forceReadAll bool) (*Response, error) {
 	version, code, msg, err := c.ReadStatusLine()
 	var headers []Header
 	if err != nil {
