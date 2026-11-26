@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/textproto"
 	"strings"
 
 	"github.com/projectdiscovery/rawhttp/client"
@@ -92,14 +91,22 @@ func fromHeaders(h []client.Header) map[string][]string {
 	}
 	var r = make(map[string][]string)
 	for _, hh := range h {
-		k := textproto.CanonicalMIMEHeaderKey(hh.Key)
-		r[k] = append(r[k], hh.Value)
+		r[hh.Key] = append(r[hh.Key], hh.Value)
 	}
 	return r
 }
 
+// headerValue joins the values of a header whose name matches key
+// case-insensitively (RFC 9110 section 5.1). Response header names keep the
+// case the server sent, so lookups must not depend on it.
 func headerValue(headers map[string][]string, key string) string {
-	return strings.Join(headers[key], " ")
+	var values []string
+	for k, v := range headers {
+		if strings.EqualFold(k, key) {
+			values = append(values, v...)
+		}
+	}
+	return strings.Join(values, " ")
 }
 
 func firstErr(err1, err2 error) error {

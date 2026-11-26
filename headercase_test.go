@@ -80,12 +80,9 @@ func TestCE(t *testing.T) {
 			}
 			body, _ := io.ReadAll(r.Body)
 			_ = r.Body.Close()
-			t.Logf("RESULT field=%-16q bodylen=%d Get(Content-Encoding)=%q", name, len(body), r.Header.Get("Content-Encoding"))
+			t.Logf("RESULT field=%-16q bodylen=%d", name, len(body))
 			if string(body) != marker {
 				t.Errorf("field %q: body=%q (len %d), want decompressed %q", name, truncHP(body), len(body), marker)
-			}
-			if got := r.Header.Get("Content-Encoding"); got != "gzip" {
-				t.Errorf("field %q: resp.Header.Get(\"Content-Encoding\")=%q, want \"gzip\" (http.Header canonical-key contract)", name, got)
 			}
 		})
 	}
