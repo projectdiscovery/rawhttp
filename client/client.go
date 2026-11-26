@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/http/httputil"
 	"strconv"
 	"strings"
@@ -87,14 +88,20 @@ func NewClient(rw io.ReadWriter) Client {
 type client struct {
 	reader
 	writer
+
+	// method of the last written request, so the response reader knows
+	// whether a body may follow (responses to HEAD never carry one)
+	method string
 }
 
 // SendRequest marshalls a HTTP request to the wire.
 func (c *client) WriteRequest(req *Request) error {
 	if len(req.RawBytes) > 0 {
+		c.method = rawMethod(req.RawBytes)
 		_, err := c.Write(req.RawBytes)
 		return err
 	}
+	c.method = req.Method
 	if err := c.WriteRequestLine(req.Method, req.Path, req.Query, req.Version.String()); err != nil {
 		return err
 	}
@@ -124,6 +131,31 @@ func (c *client) WriteRequest(req *Request) error {
 	return c.WriteBody(req.Body)
 }
 
+// rawMethod returns the method token of a raw request line.
+func rawMethod(raw []byte) string {
+	if i := bytes.IndexByte(raw, ' '); i > 0 {
+		return string(raw[:i])
+	}
+	return ""
+}
+
+// IsBodyless reports whether a response with status code to a request with
+// method cannot carry a body, whatever its headers say (RFC 9112 section 6.3).
+// Reading a body for such a response hangs until the deadline and consumes
+// bytes that belong to the next response on the connection.
+func IsBodyless(method string, code int) bool {
+	switch {
+	case method == http.MethodHead:
+		return true
+	case code >= 100 && code < 200, code == http.StatusNoContent, code == http.StatusNotModified:
+		return true
+	case method == http.MethodConnect && code >= 200 && code < 300:
+		// the connection becomes a tunnel right after the header section
+		return true
+	}
+	return false
+}
+
 // maxDuplicateStatusLines bounds how many repeated status lines we are willing
 // to discard, so a misbehaving (or malicious) server streaming "HTTP/..." lines
 // indefinitely cannot keep us looping.
@@ -136,8 +168,32 @@ func isStatusLine(line []byte) bool {
 	return bytes.HasPrefix(line, []byte("HTTP/"))
 }
 
-// ReadResponse unmarshalls a HTTP response.
+// MaxInterimResponses bounds the 1xx responses read before a final response,
+// as net/http does, so a server cannot keep the reader looping.
+const MaxInterimResponses = 5
+
+// IsInterim reports whether code is an interim 1xx response that belongs to
+// the same request as the final response that follows. 101 Switching
+// Protocols is final: the connection changes protocol after it.
+func IsInterim(code int) bool {
+	return code >= 100 && code < 200 && code != http.StatusSwitchingProtocols
+}
+
+// ReadResponse unmarshalls a HTTP response. Interim 1xx responses other than
+// 101 are skipped and the final response is returned (RFC 9110 section 15.2).
 func (c *client) ReadResponse(forceReadAll bool) (*Response, error) {
+	for interim := 0; ; interim++ {
+		resp, err := c.readResponse(forceReadAll)
+		if err != nil || !IsInterim(resp.Status.Code) {
+			return resp, err
+		}
+		if interim == MaxInterimResponses {
+			return nil, errors.New("too many 1xx informational responses")
+		}
+	}
+}
+
+func (c *client) readResponse(forceReadAll bool) (*Response, error) {
 	version, code, msg, err := c.ReadStatusLine()
 	var headers []Header
 	if err != nil {
@@ -178,7 +234,10 @@ func (c *client) ReadResponse(forceReadAll bool) (*Response, error) {
 		Headers: headers,
 		Body:    c.ReadBody(),
 	}
-	if l := resp.ContentLength(); l >= 0 && !forceReadAll {
+	if !forceReadAll && IsBodyless(c.method, code) {
+		// keep the reported Content-Length header, but read no body
+		resp.Body = http.NoBody
+	} else if l := resp.ContentLength(); l >= 0 && !forceReadAll {
 		resp.Body = io.LimitReader(resp.Body, l)
 	} else if resp.TransferEncoding() == "chunked" {
 		resp.Body = httputil.NewChunkedReader(resp.Body)
